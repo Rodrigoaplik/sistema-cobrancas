@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import CobrancaForm from "@/components/CobrancaForm";
-import { Cliente, Cobranca } from "@/types";
+import { Cliente, Cobranca, StorageCobranca } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
@@ -59,16 +59,16 @@ const CobrancaFormPage = () => {
           
           const cobrancasStorage = localStorage.getItem('cobrancas');
           if (cobrancasStorage) {
-            const cobrancas: Cobranca[] = JSON.parse(cobrancasStorage);
-            const cobrancaEncontrada = cobrancas.find(c => c.id === cobrancaId);
+            const storageCobrancas: StorageCobranca[] = JSON.parse(cobrancasStorage);
+            const storageCobranca = storageCobrancas.find(c => c.id === cobrancaId);
             
-            if (cobrancaEncontrada) {
-              // Converte a string em objeto Date
+            if (storageCobranca) {
+              // Converte de StorageCobranca para Cobranca (string para Date)
               setCobranca({
-                ...cobrancaEncontrada,
-                dataVencimento: new Date(cobrancaEncontrada.dataVencimento),
-                dataPagamento: cobrancaEncontrada.dataPagamento 
-                  ? new Date(cobrancaEncontrada.dataPagamento)
+                ...storageCobranca,
+                dataVencimento: new Date(storageCobranca.dataVencimento),
+                dataPagamento: storageCobranca.dataPagamento 
+                  ? new Date(storageCobranca.dataPagamento)
                   : undefined
               });
             } else {
@@ -103,10 +103,10 @@ const CobrancaFormPage = () => {
     try {
       // Em um cenário real, enviaríamos os dados para a API
       const cobrancasStorage = localStorage.getItem('cobrancas');
-      let cobrancas: Cobranca[] = cobrancasStorage ? JSON.parse(cobrancasStorage) : [];
+      let storageCobrancas: StorageCobranca[] = cobrancasStorage ? JSON.parse(cobrancasStorage) : [];
       
-      // Precisamos converter a data para string antes de salvar no localStorage
-      const cobrancaParaSalvar = {
+      // Converte de Cobranca para StorageCobranca (Date para string)
+      const storageCobranca: StorageCobranca = {
         ...data,
         dataVencimento: data.dataVencimento.toISOString(),
         dataPagamento: data.dataPagamento ? data.dataPagamento.toISOString() : undefined
@@ -114,15 +114,15 @@ const CobrancaFormPage = () => {
       
       if (cobrancaId) {
         // Atualização de cobrança existente
-        cobrancas = cobrancas.map(c => 
-          c.id === cobrancaId ? { ...cobrancaParaSalvar, id: cobrancaId } : c
+        storageCobrancas = storageCobrancas.map(c => 
+          c.id === cobrancaId ? { ...storageCobranca, id: cobrancaId } : c
         );
       } else {
         // Nova cobrança
-        cobrancas.push({ ...cobrancaParaSalvar, id: uuidv4() });
+        storageCobrancas.push({ ...storageCobranca, id: uuidv4() });
       }
       
-      localStorage.setItem('cobrancas', JSON.stringify(cobrancas));
+      localStorage.setItem('cobrancas', JSON.stringify(storageCobrancas));
       
       toast({
         title: "Cobrança salva com sucesso!",

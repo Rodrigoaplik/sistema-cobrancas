@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Layout from "./components/Layout";
+import ClientesListPage from "./pages/ClientesListPage";
+import ClienteFormPage from "./pages/ClienteFormPage";
+import CobrancasListPage from "./pages/CobrancasListPage";
+import CobrancaFormPage from "./pages/CobrancaFormPage";
 
 const queryClient = new QueryClient();
 
@@ -15,8 +21,15 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route element={<Layout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/clientes" element={<ClientesListPage />} />
+            <Route path="/clientes/novo" element={<ClienteFormPage />} />
+            <Route path="/clientes/editar/:id" element={<ClienteFormPage />} />
+            <Route path="/clientes/:id/cobrancas" element={<CobrancasListPage />} />
+            <Route path="/clientes/:clienteId/cobrancas/nova" element={<CobrancaFormPage />} />
+            <Route path="/clientes/:clienteId/cobrancas/editar/:cobrancaId" element={<CobrancaFormPage />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

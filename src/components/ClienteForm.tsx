@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,11 +29,11 @@ const clienteSchema = z.object({
 interface ClienteFormProps {
   cliente?: Cliente;
   onSubmit: (data: Cliente) => void;
+  isSubmitting?: boolean;
 }
 
-const ClienteForm = ({ cliente, onSubmit }: ClienteFormProps) => {
+const ClienteForm = ({ cliente, onSubmit, isSubmitting = false }: ClienteFormProps) => {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<Cliente>({
     resolver: zodResolver(clienteSchema),
@@ -51,7 +50,6 @@ const ClienteForm = ({ cliente, onSubmit }: ClienteFormProps) => {
   });
 
   const handleSubmit = async (data: Cliente) => {
-    setIsSubmitting(true);
     try {
       await onSubmit(data);
       toast({
@@ -64,8 +62,6 @@ const ClienteForm = ({ cliente, onSubmit }: ClienteFormProps) => {
         description: "Ocorreu um erro ao salvar os dados do cliente.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

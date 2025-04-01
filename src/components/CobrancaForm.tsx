@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,11 +39,11 @@ interface CobrancaFormProps {
   clienteId: string;
   cobranca?: Cobranca;
   onSubmit: (data: Cobranca) => void;
+  isSubmitting?: boolean;
 }
 
-const CobrancaForm = ({ clienteId, cobranca, onSubmit }: CobrancaFormProps) => {
+const CobrancaForm = ({ clienteId, cobranca, onSubmit, isSubmitting = false }: CobrancaFormProps) => {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<Cobranca>({
     resolver: zodResolver(cobrancaSchema),
@@ -58,7 +57,6 @@ const CobrancaForm = ({ clienteId, cobranca, onSubmit }: CobrancaFormProps) => {
   });
 
   const handleSubmit = async (data: Cobranca) => {
-    setIsSubmitting(true);
     try {
       await onSubmit({ ...data, clienteId });
       toast({
@@ -71,8 +69,6 @@ const CobrancaForm = ({ clienteId, cobranca, onSubmit }: CobrancaFormProps) => {
         description: "Ocorreu um erro ao salvar os dados da cobrança.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

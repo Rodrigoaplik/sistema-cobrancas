@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Cliente } from "@/types";
@@ -12,60 +11,56 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import clienteService from "@/services/clienteService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const ClientesListPage = () => {
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Simula o carregamento de dados
-  // Em um caso real, substituiria isso por chamadas a uma API
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Simula um atraso de rede
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Dados de exemplo
-        const mockClientes = localStorage.getItem('clientes');
-        if (mockClientes) {
-          setClientes(JSON.parse(mockClientes));
-        } else {
-          setClientes([]);
-        }
-      } catch (error) {
-        toast({
-          title: "Erro ao carregar clientes",
-          description: "Não foi possível carregar a lista de clientes.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Buscar clientes com React Query
+  const { 
+    data: clientes = [], 
+    isLoading, 
+    error 
+  } = useQuery({
+    queryKey: ["clientes"],
+    queryFn: clienteService.listarClientes,
+  });
 
-    fetchData();
-  }, [toast]);
-
-  const handleDeleteCliente = async (id: string) => {
-    try {
-      // Em um cenário real, faria uma chamada para deletar na API
-      const updatedClientes = clientes.filter(cliente => cliente.id !== id);
-      setClientes(updatedClientes);
-      localStorage.setItem('clientes', JSON.stringify(updatedClientes));
-      
+  // Mutação para excluir cliente
+  const excluirClienteMutation = useMutation({
+    mutationFn: clienteService.excluirCliente,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
       toast({
         title: "Cliente excluído com sucesso",
         description: "O cliente foi removido da lista.",
       });
-    } catch (error) {
+    },
+    onError: (error: any) => {
       toast({
         title: "Erro ao excluir cliente",
-        description: "Ocorreu um erro ao tentar excluir o cliente.",
+        description: error.response?.data?.mensagem || "Ocorreu um erro ao tentar excluir o cliente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteCliente = async (id: string) => {
+    excluirClienteMutation.mutate(id);
+  };
+
+  // Exibir mensagem de erro se a consulta falhar
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Erro ao carregar clientes",
+        description: "Não foi possível carregar a lista de clientes.",
         variant: "destructive",
       });
     }
-  };
+  }, [error, toast]);
 
   return (
     <div className="container mx-auto py-10">

@@ -1,87 +1,76 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 import ClienteForm from "@/components/ClienteForm";
 import { Cliente } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import clienteService from "@/services/clienteService";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const ClienteFormPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [cliente, setCliente] = useState<Cliente | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(id ? true : false);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (id) {
-      // Em um cenário real, buscaríamos os dados do cliente da API
-      const fetchCliente = async () => {
-        try {
-          setIsLoading(true);
-          // Simula um atraso de rede
-          await new Promise(resolve => setTimeout(resolve, 800));
-          
-          const clientesStorage = localStorage.getItem('clientes');
-          if (clientesStorage) {
-            const clientes: Cliente[] = JSON.parse(clientesStorage);
-            const clienteEncontrado = clientes.find(c => c.id === id);
-            if (clienteEncontrado) {
-              setCliente(clienteEncontrado);
-            } else {
-              toast({
-                title: "Cliente não encontrado",
-                description: "O cliente solicitado não foi encontrado.",
-                variant: "destructive",
-              });
-              navigate("/clientes");
-            }
-          }
-        } catch (error) {
-          toast({
-            title: "Erro ao carregar cliente",
-            description: "Não foi possível carregar os dados do cliente.",
-            variant: "destructive",
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      };
+  // Buscar dados do cliente com React Query (apenas se for edição)
+  const { 
+    data: cliente, 
+    isLoading 
+  } = useQuery({
+    queryKey: ["cliente", id],
+    queryFn: () => id ? clienteService.buscarCliente(id) : null,
+    enabled: !!id,
+  });
 
-      fetchCliente();
-    }
-  }, [id, navigate, toast]);
-
-  const handleSubmit = async (data: Cliente) => {
-    try {
-      // Em um cenário real, enviaríamos os dados para a API
-      const clientesStorage = localStorage.getItem('clientes');
-      let clientes: Cliente[] = clientesStorage ? JSON.parse(clientesStorage) : [];
-      
-      if (id) {
-        // Atualização de cliente existente
-        clientes = clientes.map(c => (c.id === id ? { ...data, id } : c));
-      } else {
-        // Novo cliente
-        clientes.push({ ...data, id: uuidv4() });
-      }
-      
-      localStorage.setItem('clientes', JSON.stringify(clientes));
-      
+  // Mutação para criar cliente
+  const criarClienteMutation = useMutation({
+    mutationFn: clienteService.criarCliente,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
       toast({
         title: "Cliente salvo com sucesso!",
         description: "Os dados do cliente foram salvos.",
       });
-      
       navigate("/clientes");
-    } catch (error) {
-      console.error(error);
+    },
+    onError: (error: any) => {
       toast({
         title: "Erro ao salvar cliente",
-        description: "Ocorreu um erro ao salvar os dados do cliente.",
+        description: error.response?.data?.mensagem || "Ocorreu um erro ao salvar os dados do cliente.",
         variant: "destructive",
       });
+    },
+  });
+
+  // Mutação para atualizar cliente
+  const atualizarClienteMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Cliente }) => 
+      clienteService.atualizarCliente(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clientes"] });
+      queryClient.invalidateQueries({ queryKey: ["cliente", id] });
+      toast({
+        title: "Cliente atualizado com sucesso!",
+        description: "Os dados do cliente foram atualizados.",
+      });
+      navigate("/clientes");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar cliente",
+        description: error.response?.data?.mensagem || "Ocorreu um erro ao atualizar os dados do cliente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = async (data: Cliente) => {
+    if (id) {
+      atualizarClienteMutation.mutate({ id, data });
+    } else {
+      criarClienteMutation.mutate(data);
     }
   };
 
@@ -102,7 +91,11 @@ const ClienteFormPage = () => {
             <p>Carregando dados do cliente...</p>
           </div>
         ) : (
-          <ClienteForm cliente={cliente} onSubmit={handleSubmit} />
+          <ClienteForm 
+            cliente={cliente} 
+            onSubmit={handleSubmit} 
+            isSubmitting={criarClienteMutation.isPending || atualizarClienteMutation.isPending} 
+          />
         )}
       </div>
     </div>

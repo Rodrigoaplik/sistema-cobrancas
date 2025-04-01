@@ -1,8 +1,6 @@
-
-import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { format } from "date-fns";
-import { Cliente, Cobranca } from "@/types";
+import { Cobranca } from "@/types";
 import {
   Table,
   TableBody,
@@ -13,114 +11,78 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import clienteService from "@/services/clienteService";
+import cobrancaService from "@/services/cobrancaService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const CobrancasListPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  const [cliente, setCliente] = useState<Cliente | null>(null);
-  const [cobrancas, setCobrancas] = useState<Cobranca[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { 
+    data: cliente, 
+    isLoading: isLoadingCliente,
+    error: clienteError
+  } = useQuery({
+    queryKey: ["cliente", id],
+    queryFn: () => id ? clienteService.buscarCliente(id) : null,
+    enabled: !!id,
+    onError: (error: any) => {
+      toast({
+        title: "Cliente não encontrado",
+        description: error.response?.data?.mensagem || "O cliente solicitado não foi encontrado.",
+        variant: "destructive",
+      });
+      navigate("/clientes");
+    },
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
-      
-      try {
-        setIsLoading(true);
-        // Simula um atraso de rede
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Busca o cliente
-        const clientesStorage = localStorage.getItem('clientes');
-        if (clientesStorage) {
-          const clientes: Cliente[] = JSON.parse(clientesStorage);
-          const clienteEncontrado = clientes.find(c => c.id === id);
-          
-          if (clienteEncontrado) {
-            setCliente(clienteEncontrado);
-          } else {
-            toast({
-              title: "Cliente não encontrado",
-              description: "O cliente solicitado não foi encontrado.",
-              variant: "destructive",
-            });
-            navigate("/clientes");
-            return;
-          }
-        } else {
-          toast({
-            title: "Nenhum cliente cadastrado",
-            description: "Não há clientes cadastrados no sistema.",
-            variant: "destructive",
-          });
-          navigate("/clientes");
-          return;
-        }
-        
-        // Busca as cobranças
-        const cobrancasStorage = localStorage.getItem('cobrancas');
-        if (cobrancasStorage) {
-          const todasCobrancas: Cobranca[] = JSON.parse(cobrancasStorage);
-          // Filtra apenas as cobranças do cliente atual
-          const cobrancasDoCliente = todasCobrancas.filter(c => c.clienteId === id);
-          
-          // Converte string em objeto Date para as datas
-          const cobrancasComDatas = cobrancasDoCliente.map(c => ({
-            ...c,
-            dataVencimento: new Date(c.dataVencimento),
-            dataPagamento: c.dataPagamento ? new Date(c.dataPagamento) : undefined
-          }));
-          
-          setCobrancas(cobrancasComDatas);
-        } else {
-          setCobrancas([]);
-        }
-      } catch (error) {
-        console.error(error);
-        toast({
-          title: "Erro ao carregar dados",
-          description: "Ocorreu um erro ao carregar as cobranças do cliente.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const { 
+    data: cobrancas = [], 
+    isLoading: isLoadingCobrancas,
+    error: cobrancasError
+  } = useQuery({
+    queryKey: ["cobrancas", id],
+    queryFn: () => id ? cobrancaService.listarCobrancasPorCliente(id) : [],
+    enabled: !!id && !!cliente,
+  });
 
-    fetchData();
-  }, [id, navigate, toast]);
-
-  const handleDeleteCobranca = async (cobrancaId: string) => {
-    try {
-      // Em um cenário real, faria uma chamada para deletar na API
-      const cobrancasStorage = localStorage.getItem('cobrancas');
-      if (cobrancasStorage) {
-        const todasCobrancas: Cobranca[] = JSON.parse(cobrancasStorage);
-        const cobrancasAtualizadas = todasCobrancas.filter(c => c.id !== cobrancaId);
-        
-        localStorage.setItem('cobrancas', JSON.stringify(cobrancasAtualizadas));
-        
-        // Atualiza a lista local
-        setCobrancas(cobrancas.filter(c => c.id !== cobrancaId));
-        
-        toast({
-          title: "Cobrança excluída com sucesso",
-          description: "A cobrança foi removida com sucesso.",
-        });
-      }
-    } catch (error) {
-      console.error(error);
+  const excluirCobrancaMutation = useMutation({
+    mutationFn: cobrancaService.excluirCobranca,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cobrancas", id] });
+      toast({
+        title: "Cobrança excluída com sucesso",
+        description: "A cobrança foi removida com sucesso.",
+      });
+    },
+    onError: (error: any) => {
       toast({
         title: "Erro ao excluir cobrança",
-        description: "Ocorreu um erro ao tentar excluir a cobrança.",
+        description: error.response?.data?.mensagem || "Ocorreu um erro ao tentar excluir a cobrança.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteCobranca = async (cobrancaId: string) => {
+    excluirCobrancaMutation.mutate(cobrancaId);
+  };
+
+  const isLoading = isLoadingCliente || isLoadingCobrancas;
+
+  useEffect(() => {
+    if (cobrancasError) {
+      toast({
+        title: "Erro ao carregar cobranças",
+        description: "Ocorreu um erro ao carregar as cobranças do cliente.",
         variant: "destructive",
       });
     }
-  };
+  }, [cobrancasError, toast]);
 
-  // Função para determinar a classe de cor com base no status
   const getStatusColor = (status: string, dataVencimento: Date) => {
     const hoje = new Date();
     

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import CobrancaForm from "@/components/CobrancaForm";
 import { Cobranca } from "@/types";
@@ -24,33 +24,42 @@ const CobrancaFormPage = () => {
     queryKey: ["cliente", clienteId],
     queryFn: () => clienteId ? clienteService.buscarCliente(clienteId) : null,
     enabled: !!clienteId,
-    onError: (error: any) => {
+  });
+
+  // Notificar erro de cliente não encontrado
+  useEffect(() => {
+    if (clienteError) {
       toast({
         title: "Cliente não encontrado",
-        description: error.response?.data?.mensagem || "O cliente solicitado não foi encontrado.",
+        description: "O cliente solicitado não foi encontrado.",
         variant: "destructive",
       });
       navigate("/clientes");
-    },
-  });
+    }
+  }, [clienteError, toast, navigate]);
 
   // Buscar cobrança com React Query (apenas se for edição)
   const { 
     data: cobranca, 
-    isLoading: isLoadingCobranca 
+    isLoading: isLoadingCobranca,
+    error: cobrancaError
   } = useQuery({
     queryKey: ["cobranca", cobrancaId],
     queryFn: () => cobrancaId ? cobrancaService.buscarCobranca(cobrancaId) : null,
     enabled: !!cobrancaId,
-    onError: (error: any) => {
+  });
+
+  // Notificar erro de cobrança não encontrada
+  useEffect(() => {
+    if (cobrancaError) {
       toast({
         title: "Cobrança não encontrada",
-        description: error.response?.data?.mensagem || "A cobrança solicitada não foi encontrada.",
+        description: "A cobrança solicitada não foi encontrada.",
         variant: "destructive",
       });
       navigate(`/clientes/${clienteId}/cobrancas`);
-    },
-  });
+    }
+  }, [cobrancaError, toast, navigate, clienteId]);
 
   // Mutação para criar cobrança
   const criarCobrancaMutation = useMutation({

@@ -72,14 +72,7 @@ const CobrancaFormPage = () => {
         description: "Os dados da cobrança foram salvos.",
       });
       navigate(`/clientes/${clienteId}/cobrancas`);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao salvar cobrança",
-        description: error.response?.data?.mensagem || "Ocorreu um erro ao salvar os dados da cobrança.",
-        variant: "destructive",
-      });
-    },
+    }
   });
 
   // Mutação para atualizar cobrança
@@ -94,23 +87,20 @@ const CobrancaFormPage = () => {
         description: "Os dados da cobrança foram atualizados.",
       });
       navigate(`/clientes/${clienteId}/cobrancas`);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao atualizar cobrança",
-        description: error.response?.data?.mensagem || "Ocorreu um erro ao atualizar os dados da cobrança.",
-        variant: "destructive",
-      });
-    },
+    }
   });
 
   const handleSubmit = async (data: Cobranca) => {
     if (!clienteId) return;
     
+    // Garantir que o status seja um dos valores válidos do tipo
+    const status = data.status as 'pendente' | 'pago' | 'atrasado';
+    const cobrancaData = { ...data, status };
+    
     if (cobrancaId) {
-      atualizarCobrancaMutation.mutate({ id: cobrancaId, data });
+      atualizarCobrancaMutation.mutate({ id: cobrancaId, data: cobrancaData });
     } else {
-      criarCobrancaMutation.mutate({ clienteId, data });
+      criarCobrancaMutation.mutate({ clienteId, data: cobrancaData });
     }
   };
 

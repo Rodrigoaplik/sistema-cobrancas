@@ -39,6 +39,25 @@ class CobrancaModel {
     }
   }
 
+  // Buscar cobranças por data de vencimento específica e status opcional
+  async findByVencimentoData(dataVencimento, status) {
+    try {
+      let query = 'SELECT * FROM cobrancas WHERE data_vencimento = ?';
+      const params = [dataVencimento];
+      
+      if (status) {
+        query += ' AND status = ?';
+        params.push(status);
+      }
+      
+      const [rows] = await pool.query(query, params);
+      return rows;
+    } catch (error) {
+      console.error(`Erro ao buscar cobranças com vencimento em ${dataVencimento}:`, error);
+      throw error;
+    }
+  }
+
   // Criar uma nova cobrança
   async create(cobranca) {
     try {

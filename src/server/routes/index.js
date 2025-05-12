@@ -2,18 +2,18 @@
 const express = require('express');
 const clienteRoutes = require('./clienteRoutes');
 const cobrancaRoutes = require('./cobrancaRoutes');
+const notificacaoRoutes = require('./notificacaoRoutes');
 
 const router = express.Router();
 
-// Rota de verificação de saúde da API
-router.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'API funcionando corretamente' });
-});
-
-// Registrar rotas de clientes
+// Rotas para recursos da API
 router.use('/clientes', clienteRoutes);
-
-// Registrar rotas de cobranças
 router.use('/cobrancas', cobrancaRoutes);
+router.use('/notificacoes', notificacaoRoutes);
+
+// Rota de status
+router.get('/status', (req, res) => {
+  res.status(200).json({ status: 'API funcionando corretamente' });
+});
 
 module.exports = router;

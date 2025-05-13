@@ -8,13 +8,22 @@ const statusClasses = {
 };
 
 interface CobrancaStatusBadgeProps {
-  status: 'pendente' | 'pago' | 'atrasado';
+  status: 'pendente' | 'pago' | 'atrasado' | string | null | undefined;
 }
 
 const CobrancaStatusBadge = ({ status }: CobrancaStatusBadgeProps) => {
+  // Verificar se o status é válido
+  if (!status || !['pendente', 'pago', 'atrasado'].includes(status)) {
+    return <span className="px-2 py-1 rounded-full text-xs font-medium border bg-gray-100 text-gray-800">
+      Desconhecido
+    </span>;
+  }
+
+  const validStatus = status as 'pendente' | 'pago' | 'atrasado';
+  
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusClasses[status]}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusClasses[validStatus]}`}>
+      {validStatus.charAt(0).toUpperCase() + validStatus.slice(1)}
     </span>
   );
 };

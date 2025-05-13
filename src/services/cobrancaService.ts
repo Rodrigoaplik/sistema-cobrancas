@@ -17,14 +17,41 @@ const formatarCobrancaParaAPI = (cobranca: Cobranca) => {
 
 // Função auxiliar para formatar datas da API para o frontend
 const formatarCobrancaDaAPI = (cobranca: any): Cobranca => {
+  // Verificar se as datas são válidas
+  let dataVencimento: Date;
+  try {
+    dataVencimento = new Date(cobranca.dataVencimento);
+    if (isNaN(dataVencimento.getTime())) {
+      console.warn("Data de vencimento inválida:", cobranca.dataVencimento);
+      dataVencimento = new Date(); // Usar data atual como fallback
+    }
+  } catch (e) {
+    console.warn("Erro ao converter data de vencimento:", e);
+    dataVencimento = new Date(); // Usar data atual como fallback
+  }
+
+  let dataPagamento: Date | undefined = undefined;
+  if (cobranca.dataPagamento) {
+    try {
+      dataPagamento = new Date(cobranca.dataPagamento);
+      if (isNaN(dataPagamento.getTime())) {
+        console.warn("Data de pagamento inválida:", cobranca.dataPagamento);
+        dataPagamento = undefined;
+      }
+    } catch (e) {
+      console.warn("Erro ao converter data de pagamento:", e);
+      dataPagamento = undefined;
+    }
+  }
+
   return {
     id: cobranca.id,
     clienteId: cobranca.clienteId,
     descricao: cobranca.descricao,
     valor: cobranca.valor,
-    dataVencimento: new Date(cobranca.dataVencimento),
+    dataVencimento: dataVencimento,
     status: cobranca.status as 'pendente' | 'pago' | 'atrasado',
-    dataPagamento: cobranca.dataPagamento ? new Date(cobranca.dataPagamento) : undefined
+    dataPagamento: dataPagamento
   };
 };
 

@@ -216,7 +216,7 @@ class CobrancaController {
   }
 
   // Verificar cobranças vencidas
-  async verificarCobranfasVencidas(req, res) {
+  async verificarCobrancasVencidas(req, res) {
     try {
       const resultado = await cobrancaModel.verificarCobranfasVencidas();
       res.status(200).json(resultado);

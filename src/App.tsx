@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
@@ -28,6 +28,7 @@ const App = () => (
             <Route path="/clientes/editar/:id" element={<ClienteFormPage />} />
             <Route path="/clientes/:id/cobrancas" element={<CobrancasListPage />} />
             <Route path="/clientes/:clienteId/cobrancas/nova" element={<CobrancaFormPage />} />
+            <Route path="/clientes/:clienteId/cobrancas/novo" element={<Navigate to="../nova" replace />} />
             <Route path="/clientes/:clienteId/cobrancas/editar/:cobrancaId" element={<CobrancaFormPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />

@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { formatRelative, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
-  Pencil, Trash2, FileText, Check, X, Bell, RefreshCcw 
+  Pencil, Trash2, FileText, Check, X, Bell, RefreshCcw, Loader 
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -175,7 +174,7 @@ const CobrancasListPage = () => {
           >
             {isVerificandoVencimentos ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader className="mr-2 h-4 w-4 animate-spin" />
                 Verificando...
               </>
             ) : (

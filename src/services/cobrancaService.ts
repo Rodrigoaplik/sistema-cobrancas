@@ -1,4 +1,3 @@
-
 import api from './api';
 import { Cobranca } from '@/types';
 
@@ -83,14 +82,24 @@ const cobrancaService = {
 
   // Atualizar uma cobrança existente
   atualizarCobranca: async (id: string, cobranca: Cobranca): Promise<Cobranca> => {
-    const cobrancaFormatada = formatarCobrancaParaAPI(cobranca);
-    const response = await api.put(`/cobrancas/${id}`, cobrancaFormatada);
-    return formatarCobrancaDaAPI(response.data);
+    try {
+      const cobrancaFormatada = formatarCobrancaParaAPI(cobranca);
+      const response = await api.put(`/cobrancas/${id}`, cobrancaFormatada);
+      return formatarCobrancaDaAPI(response.data);
+    } catch (error) {
+      console.error(`Erro ao atualizar cobrança: ${error}`);
+      throw error;
+    }
   },
 
   // Excluir uma cobrança
   excluirCobranca: async (id: string): Promise<void> => {
-    await api.delete(`/cobrancas/${id}`);
+    try {
+      await api.delete(`/cobrancas/${id}`);
+    } catch (error) {
+      console.error(`Erro ao excluir cobrança: ${error}`);
+      throw error;
+    }
   },
 
   // Atualizar status de uma cobrança

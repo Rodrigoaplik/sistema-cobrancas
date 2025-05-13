@@ -39,6 +39,7 @@ const CobrancaActionButtons = ({ cobranca, clienteId }: CobrancaActionButtonsPro
       });
     },
     onError: (error: any) => {
+      console.error("Erro ao excluir cobrança:", error);
       toast({
         title: "Erro ao excluir cobrança",
         description: error.response?.data?.mensagem || "Ocorreu um erro ao excluir a cobrança.",
@@ -58,6 +59,7 @@ const CobrancaActionButtons = ({ cobranca, clienteId }: CobrancaActionButtonsPro
       });
     },
     onError: (error: any) => {
+      console.error("Erro ao atualizar status:", error);
       toast({
         title: "Erro ao atualizar status",
         description: error.response?.data?.mensagem || "Ocorreu um erro ao atualizar o status da cobrança.",

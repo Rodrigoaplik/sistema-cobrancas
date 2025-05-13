@@ -1,4 +1,3 @@
-
 const cobrancaModel = require('../models/cobrancaModel');
 const clienteModel = require('../models/clienteModel');
 
@@ -218,7 +217,7 @@ class CobrancaController {
   // Verificar cobranças vencidas
   async verificarCobrancasVencidas(req, res) {
     try {
-      const resultado = await cobrancaModel.verificarCobranfasVencidas();
+      const resultado = await cobrancaModel.verificarCobrancasVencidas();
       res.status(200).json(resultado);
     } catch (error) {
       console.error('Erro ao verificar cobranças vencidas:', error);

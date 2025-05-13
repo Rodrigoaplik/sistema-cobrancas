@@ -1,4 +1,3 @@
-
 const { pool } = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 
@@ -154,7 +153,7 @@ class CobrancaModel {
   }
 
   // Verificar cobranças vencidas e atualizar status
-  async verificarCobranfasVencidas() {
+  async verificarCobrancasVencidas() {
     try {
       const hoje = new Date().toISOString().split('T')[0];
       const query = `

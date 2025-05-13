@@ -12,7 +12,14 @@ import ClienteFormPage from "./pages/ClienteFormPage";
 import CobrancasListPage from "./pages/CobrancasListPage";
 import CobrancaFormPage from "./pages/CobrancaFormPage";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -26,9 +33,10 @@ const App = () => (
             <Route path="/clientes" element={<ClientesListPage />} />
             <Route path="/clientes/novo" element={<ClienteFormPage />} />
             <Route path="/clientes/editar/:id" element={<ClienteFormPage />} />
-            <Route path="/clientes/:id/cobrancas" element={<CobrancasListPage />} />
+            <Route path="/clientes/:clienteId/cobrancas" element={<CobrancasListPage />} />
             <Route path="/clientes/:clienteId/cobrancas/nova" element={<CobrancaFormPage />} />
             <Route path="/clientes/:clienteId/cobrancas/novo" element={<Navigate to="../nova" replace />} />
+            <Route path="/clientes/:clienteId/cobrancas/:cobrancaId" element={<CobrancaFormPage />} />
             <Route path="/clientes/:clienteId/cobrancas/editar/:cobrancaId" element={<CobrancaFormPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />

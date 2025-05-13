@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from "react-router-dom";
-import { RefreshCcw, Loader } from "lucide-react";
+import { RefreshCcw, Loader, Plus, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CobrancaPageHeaderProps {
@@ -57,15 +57,17 @@ const CobrancaPageHeader = ({
           Atualizar Lista
         </Button>
         <Button 
-          onClick={() => navigate(`/clientes/${clienteId}/cobrancas/novo`)}
+          onClick={() => navigate(`/clientes/${clienteId}/cobrancas/nova`)}
         >
+          <Plus className="mr-2 h-4 w-4" />
           Nova Cobrança
         </Button>
         <Button 
           variant="outline" 
           onClick={() => navigate("/clientes")}
         >
-          Voltar
+          <ChevronLeft className="mr-2 h-4 w-4" />
+          Voltar para Clientes
         </Button>
       </div>
     </div>

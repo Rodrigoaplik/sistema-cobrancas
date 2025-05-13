@@ -29,6 +29,12 @@ const formatarCobrancaDaAPI = (cobranca: any): Cobranca => {
 };
 
 const cobrancaService = {
+  // Listar todas as cobranças
+  listarCobrancas: async (): Promise<Cobranca[]> => {
+    const response = await api.get('/cobrancas');
+    return response.data.map(formatarCobrancaDaAPI);
+  },
+
   // Listar cobranças por cliente
   listarCobrancasPorCliente: async (clienteId: string): Promise<Cobranca[]> => {
     const response = await api.get(`/clientes/${clienteId}/cobrancas`);
@@ -69,6 +75,12 @@ const cobrancaService = {
         : dataPagamento
     };
     await api.patch(`/cobrancas/${id}/status`, data);
+  },
+  
+  // Verificar cobranças vencidas
+  verificarCobrancasVencidas: async (): Promise<any> => {
+    const response = await api.post('/cobrancas/verificar-vencidas');
+    return response.data;
   }
 };
 

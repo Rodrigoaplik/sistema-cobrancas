@@ -1,5 +1,5 @@
 
-import { Pencil, Trash2, Check, X } from "lucide-react";
+import { Pencil, Trash2, Check, X, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,13 @@ const CobrancaActionButtons = ({ cobranca, clienteId }: CobrancaActionButtonsPro
         title: "Cobrança excluída com sucesso!",
         description: "A cobrança foi removida permanentemente.",
       });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao excluir cobrança",
+        description: error.response?.data?.mensagem || "Ocorreu um erro ao excluir a cobrança.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -48,6 +55,13 @@ const CobrancaActionButtons = ({ cobranca, clienteId }: CobrancaActionButtonsPro
       toast({
         title: "Status atualizado com sucesso!",
         description: "O status da cobrança foi atualizado.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar status",
+        description: error.response?.data?.mensagem || "Ocorreu um erro ao atualizar o status da cobrança.",
+        variant: "destructive",
       });
     }
   });
@@ -89,15 +103,10 @@ const CobrancaActionButtons = ({ cobranca, clienteId }: CobrancaActionButtonsPro
           <X className="h-4 w-4 text-red-500" />
         </Button>
       )}
-      <EnviarNotificacaoButton
-        clienteId={clienteId}
-        cobrancaId={cobranca.id!}
-        tipo={cobranca.status === 'atrasado' ? 'cobranca_vencida' : 'aviso_vencimento'}
-      />
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => navigate(`/clientes/${clienteId}/cobrancas/${cobranca.id}`)}
+        onClick={() => navigate(`/clientes/${clienteId}/cobrancas/editar/${cobranca.id}`)}
         title="Editar cobrança"
       >
         <Pencil className="h-4 w-4" />
@@ -132,6 +141,11 @@ const CobrancaActionButtons = ({ cobranca, clienteId }: CobrancaActionButtonsPro
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <EnviarNotificacaoButton
+        clienteId={clienteId}
+        cobrancaId={cobranca.id!}
+        tipo={cobranca.status === 'atrasado' ? 'cobranca_vencida' : 'aviso_vencimento'}
+      />
     </div>
   );
 };

@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import clienteService from "@/services/clienteService";
 import cobrancaService from "@/services/cobrancaService";
-import notificacaoService from "@/services/notificacaoService";
 import CobrancaPageHeader from "@/components/cobrancas/CobrancaPageHeader";
 import CobrancaTable from "@/components/cobrancas/CobrancaTable";
 import EmptyCobrancaState from "@/components/cobrancas/EmptyCobrancaState";
@@ -39,12 +38,12 @@ const CobrancasListPage = () => {
   });
 
   const verificarVencimentosMutation = useMutation({
-    mutationFn: () => notificacaoService.verificarCobrancasParaNotificar(),
+    mutationFn: () => cobrancaService.verificarCobrancasVencidas(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cobrancas", clienteId] });
       toast({
         title: "Verificação de vencimentos concluída",
-        description: "As notificações foram enviadas conforme necessário.",
+        description: "As cobranças foram atualizadas conforme necessário.",
       });
       setIsVerificandoVencimentos(false);
     },
@@ -63,7 +62,7 @@ const CobrancasListPage = () => {
       });
       navigate("/clientes");
     }
-  }, [clienteError, toast]);
+  }, [clienteError, toast, navigate]);
 
   // Notificar erro de cobranças
   useEffect(() => {

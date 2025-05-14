@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,8 +34,6 @@ interface ClienteFormProps {
 }
 
 const ClienteForm = ({ cliente, onSubmit, isSubmitting = false }: ClienteFormProps) => {
-  const { toast } = useToast();
-  
   const form = useForm<Cliente>({
     resolver: zodResolver(clienteSchema),
     defaultValues: cliente || {
@@ -49,25 +48,9 @@ const ClienteForm = ({ cliente, onSubmit, isSubmitting = false }: ClienteFormPro
     },
   });
 
-  const handleSubmit = async (data: Cliente) => {
-    try {
-      await onSubmit(data);
-      toast({
-        title: "Cliente salvo com sucesso!",
-        description: "Os dados do cliente foram salvos.",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro ao salvar cliente",
-        description: "Ocorreu um erro ao salvar os dados do cliente.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}

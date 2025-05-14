@@ -6,6 +6,9 @@ export interface NotificacaoOptions {
   clienteId: string;
   cobrancaId: string;
   tipo: 'aviso_vencimento' | 'cobranca_vencida';
+  mensagemWhatsapp?: string;
+  assuntoEmail?: string;
+  mensagemEmail?: string;
 }
 
 // Interface para resposta de notificação
@@ -23,6 +26,17 @@ const notificacaoService = {
       return response.data;
     } catch (error) {
       console.error('Erro ao enviar notificação:', error);
+      throw error;
+    }
+  },
+
+  // Enviar notificação personalizada
+  enviarNotificacaoPersonalizada: async (options: NotificacaoOptions): Promise<NotificacaoResponse> => {
+    try {
+      const response = await api.post('/notificacoes/enviar-manual', options);
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao enviar notificação personalizada:', error);
       throw error;
     }
   },

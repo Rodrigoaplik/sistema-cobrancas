@@ -72,6 +72,14 @@ const CobrancaFormPage = () => {
         description: "Os dados da cobrança foram salvos.",
       });
       navigate(`/clientes/${clienteId}/cobrancas`);
+    },
+    onError: (error: any) => {
+      console.error("Erro ao criar cobrança:", error);
+      toast({
+        title: "Erro ao criar cobrança",
+        description: error.response?.data?.mensagem || "Ocorreu um erro ao criar a cobrança.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -87,6 +95,14 @@ const CobrancaFormPage = () => {
         description: "Os dados da cobrança foram atualizados.",
       });
       navigate(`/clientes/${clienteId}/cobrancas`);
+    },
+    onError: (error: any) => {
+      console.error("Erro ao atualizar cobrança:", error);
+      toast({
+        title: "Erro ao atualizar cobrança",
+        description: error.response?.data?.mensagem || "Ocorreu um erro ao atualizar a cobrança.",
+        variant: "destructive",
+      });
     }
   });
 

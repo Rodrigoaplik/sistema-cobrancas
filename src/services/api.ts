@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Utiliza a variável de ambiente como URL da API ou usa fallback para localhost
-const API_URL = import.meta.env.VITE_API_URL || 'https://mock-api.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -22,9 +22,26 @@ api.interceptors.response.use(
       
       // Resposta simulada para clientes
       if (error.config.url.includes('/clientes')) {
-        return Promise.resolve({
-          data: [
-            { 
+        if (error.config.url.endsWith('/clientes')) {
+          return Promise.resolve({
+            data: [
+              { 
+                id: '1',
+                nome: 'Cliente de Teste',
+                email: 'teste@example.com',
+                telefone: '(11) 99999-9999',
+                whatsapp: '(11) 99999-9999',
+                endereco: 'Rua de Teste, 123',
+                cidade: 'São Paulo',
+                estado: 'SP',
+                cep: '12345678'
+              }
+            ]
+          });
+        } else if (error.config.url.match(/\/clientes\/\w+$/)) {
+          // Buscar cliente por ID
+          return Promise.resolve({
+            data: { 
               id: '1',
               nome: 'Cliente de Teste',
               email: 'teste@example.com',
@@ -35,14 +52,46 @@ api.interceptors.response.use(
               estado: 'SP',
               cep: '12345678'
             }
-          ]
-        });
+          });
+        }
       }
       
       // Resposta simulada para cobranças
       if (error.config.url.includes('/cobrancas')) {
+        // Listar todas as cobranças
+        if (error.config.url.endsWith('/cobrancas')) {
+          return Promise.resolve({
+            data: [
+              {
+                id: '1',
+                clienteId: '1',
+                descricao: 'Fatura Mensal',
+                valor: 199.90,
+                dataVencimento: new Date().toISOString(),
+                status: 'pendente',
+                dataPagamento: null
+              }
+            ]
+          });
+        }
+        
+        // Buscar uma cobrança específica por ID
+        if (error.config.url.match(/\/cobrancas\/\w+$/)) {
+          return Promise.resolve({
+            data: {
+              id: error.config.url.split('/').pop(),
+              clienteId: '1',
+              descricao: 'Fatura Mensal',
+              valor: 199.90,
+              dataVencimento: new Date().toISOString(),
+              status: 'pendente',
+              dataPagamento: null
+            }
+          });
+        }
+        
+        // Listar cobranças por cliente
         if (error.config.url.includes('/clientes/') && error.config.url.includes('/cobrancas')) {
-          // Lista de cobranças por cliente
           return Promise.resolve({
             data: [
               {
@@ -75,6 +124,59 @@ api.interceptors.response.use(
             ]
           });
         }
+        
+        // Criar cobrança
+        if (error.config.method === 'post' && 
+            error.config.url.includes('/clientes/') && 
+            error.config.url.includes('/cobrancas')) {
+          const data = JSON.parse(error.config.data);
+          return Promise.resolve({
+            data: {
+              id: Math.random().toString(36).substring(7),
+              clienteId: error.config.url.split('/')[2], // Extrai o ID do cliente da URL
+              ...data,
+            }
+          });
+        }
+        
+        // Atualizar cobrança
+        if (error.config.method === 'put' && error.config.url.match(/\/cobrancas\/\w+$/)) {
+          const data = JSON.parse(error.config.data);
+          return Promise.resolve({
+            data: {
+              id: error.config.url.split('/').pop(),
+              ...data,
+            }
+          });
+        }
+        
+        // Excluir cobrança
+        if (error.config.method === 'delete' && error.config.url.match(/\/cobrancas\/\w+$/)) {
+          return Promise.resolve({
+            data: { mensagem: 'Cobrança excluída com sucesso' }
+          });
+        }
+        
+        // Atualizar status
+        if (error.config.method === 'patch' && error.config.url.match(/\/cobrancas\/\w+\/status$/)) {
+          const data = JSON.parse(error.config.data);
+          return Promise.resolve({
+            data: {
+              id: error.config.url.split('/')[2],
+              ...data,
+            }
+          });
+        }
+        
+        // Verificar cobranças vencidas
+        if (error.config.url.includes('/verificar-vencidas')) {
+          return Promise.resolve({
+            data: {
+              atualizadas: 2,
+              message: 'Cobranças vencidas atualizadas com sucesso'
+            }
+          });
+        }
       }
       
       // Resposta simulada para notificações
@@ -88,24 +190,6 @@ api.interceptors.response.use(
             }
           });
         }
-        
-        if (error.config.url.includes('/verificar-vencimentos')) {
-          return Promise.resolve({
-            data: {
-              notificacoes_a_vencer: [{ success: true, cobrancaId: '1', clienteId: '1' }],
-              notificacoes_vencidas: []
-            }
-          });
-        }
-      }
-      
-      // Resposta simulada para pagamentos
-      if (error.config.url.includes('/pagamentos')) {
-        return Promise.resolve({
-          data: {
-            linkPagamento: 'https://pagamento-simulado.com/pix/123'
-          }
-        });
       }
     }
     console.error('Erro na requisição:', error);

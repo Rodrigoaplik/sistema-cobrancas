@@ -1,3 +1,4 @@
+
 import api from './api';
 import { Cobranca } from '@/types';
 
@@ -45,7 +46,7 @@ const formatarCobrancaDaAPI = (cobranca: any): Cobranca => {
 
   return {
     id: cobranca.id,
-    clienteId: cobranca.clienteId,
+    clienteId: cobranca.clienteId || cobranca.cliente_id,
     descricao: cobranca.descricao,
     valor: cobranca.valor,
     dataVencimento: dataVencimento,
@@ -63,7 +64,7 @@ const cobrancaService = {
 
   // Listar cobranças por cliente
   listarCobrancasPorCliente: async (clienteId: string): Promise<Cobranca[]> => {
-    const response = await api.get(`/clientes/${clienteId}/cobrancas`);
+    const response = await api.get(`/cobrancas/clientes/${clienteId}/cobrancas`);
     return response.data.map(formatarCobrancaDaAPI);
   },
 
@@ -76,7 +77,7 @@ const cobrancaService = {
   // Criar uma nova cobrança
   criarCobranca: async (clienteId: string, cobranca: Cobranca): Promise<Cobranca> => {
     const cobrancaFormatada = formatarCobrancaParaAPI(cobranca);
-    const response = await api.post(`/clientes/${clienteId}/cobrancas`, cobrancaFormatada);
+    const response = await api.post(`/cobrancas/clientes/${clienteId}/cobrancas`, cobrancaFormatada);
     return formatarCobrancaDaAPI(response.data);
   },
 

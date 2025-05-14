@@ -68,19 +68,50 @@ const CobrancaActionButtons = ({ cobranca, clienteId }: CobrancaActionButtonsPro
     }
   });
 
-  const handleMarcarPago = (id: string) => {
+  const handleMarcarPago = () => {
+    if (!cobranca.id) {
+      toast({
+        title: "Erro",
+        description: "ID da cobrança não disponível",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     atualizarStatusMutation.mutate({
-      id, 
+      id: cobranca.id, 
       status: 'pago', 
       dataPagamento: new Date()
     });
   };
 
-  const handleMarcarPendente = (id: string) => {
+  const handleMarcarPendente = () => {
+    if (!cobranca.id) {
+      toast({
+        title: "Erro",
+        description: "ID da cobrança não disponível",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     atualizarStatusMutation.mutate({
-      id, 
+      id: cobranca.id, 
       status: 'pendente'
     });
+  };
+
+  const handleExcluir = () => {
+    if (!cobranca.id) {
+      toast({
+        title: "Erro",
+        description: "ID da cobrança não disponível",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    excluirCobrancaMutation.mutate(cobranca.id);
   };
 
   return (
@@ -89,7 +120,7 @@ const CobrancaActionButtons = ({ cobranca, clienteId }: CobrancaActionButtonsPro
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => handleMarcarPago(cobranca.id!)}
+          onClick={handleMarcarPago}
           title="Marcar como pago"
         >
           <Check className="h-4 w-4 text-green-500" />
@@ -99,7 +130,7 @@ const CobrancaActionButtons = ({ cobranca, clienteId }: CobrancaActionButtonsPro
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => handleMarcarPendente(cobranca.id!)}
+          onClick={handleMarcarPendente}
           title="Marcar como pendente"
         >
           <X className="h-4 w-4 text-red-500" />
@@ -110,6 +141,7 @@ const CobrancaActionButtons = ({ cobranca, clienteId }: CobrancaActionButtonsPro
         size="icon"
         onClick={() => navigate(`/clientes/${clienteId}/cobrancas/editar/${cobranca.id}`)}
         title="Editar cobrança"
+        disabled={!cobranca.id}
       >
         <Pencil className="h-4 w-4" />
       </Button>
@@ -135,7 +167,7 @@ const CobrancaActionButtons = ({ cobranca, clienteId }: CobrancaActionButtonsPro
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => excluirCobrancaMutation.mutate(cobranca.id!)}
+              onClick={handleExcluir}
               className="bg-red-500 hover:bg-red-600"
             >
               Excluir
@@ -143,11 +175,13 @@ const CobrancaActionButtons = ({ cobranca, clienteId }: CobrancaActionButtonsPro
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <EnviarNotificacaoButton
-        clienteId={clienteId}
-        cobrancaId={cobranca.id!}
-        tipo={cobranca.status === 'atrasado' ? 'cobranca_vencida' : 'aviso_vencimento'}
-      />
+      {cobranca.id && (
+        <EnviarNotificacaoButton
+          clienteId={clienteId}
+          cobrancaId={cobranca.id}
+          tipo={cobranca.status === 'atrasado' ? 'cobranca_vencida' : 'aviso_vencimento'}
+        />
+      )}
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,25 +46,35 @@ interface CobrancaFormProps {
 const CobrancaForm = ({ clienteId, cobranca, onSubmit, isSubmitting = false }: CobrancaFormProps) => {
   const { toast } = useToast();
   
+  // Preparar valores padrão, garantindo que dataVencimento seja uma data
+  let defaultValues = {
+    clienteId,
+    descricao: "",
+    valor: 0,
+    dataVencimento: new Date(),
+    status: "pendente" as 'pendente' | 'pago' | 'atrasado',
+  };
+
+  if (cobranca) {
+    defaultValues = {
+      clienteId,
+      descricao: cobranca.descricao || "",
+      valor: cobranca.valor || 0,
+      dataVencimento: cobranca.dataVencimento instanceof Date ? cobranca.dataVencimento : new Date(),
+      status: cobranca.status || "pendente",
+    };
+  }
+  
   const form = useForm<Cobranca>({
     resolver: zodResolver(cobrancaSchema),
-    defaultValues: cobranca || {
-      clienteId,
-      descricao: "",
-      valor: 0,
-      dataVencimento: new Date(),
-      status: "pendente",
-    },
+    defaultValues: defaultValues,
   });
 
   const handleSubmit = async (data: Cobranca) => {
     try {
       await onSubmit({ ...data, clienteId });
-      toast({
-        title: "Cobrança salva com sucesso!",
-        description: "Os dados da cobrança foram salvos.",
-      });
     } catch (error) {
+      console.error("Erro ao salvar cobrança:", error);
       toast({
         title: "Erro ao salvar cobrança",
         description: "Ocorreu um erro ao salvar os dados da cobrança.",

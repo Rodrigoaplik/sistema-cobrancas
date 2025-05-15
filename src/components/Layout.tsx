@@ -10,8 +10,8 @@ const Layout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white shadow-sm">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <header className="sticky top-0 z-10 bg-white shadow-md backdrop-blur-sm bg-white/90">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <Link to="/" className="text-xl font-bold text-gray-900">
@@ -45,7 +45,7 @@ const Layout = () => {
         </div>
       </header>
       
-      <main>
+      <main className="flex-grow">
         <Outlet />
       </main>
       

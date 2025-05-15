@@ -58,12 +58,16 @@ const formatarCobrancaDaAPI = (cobranca: any): Cobranca => {
 const cobrancaService = {
   // Listar todas as cobranças
   listarCobrancas: async (): Promise<Cobranca[]> => {
+    // Verificar cobranças vencidas antes de listar
+    await cobrancaService.verificarCobrancasVencidas();
     const response = await api.get('/cobrancas');
     return response.data.map(formatarCobrancaDaAPI);
   },
 
   // Listar cobranças por cliente
   listarCobrancasPorCliente: async (clienteId: string): Promise<Cobranca[]> => {
+    // Verificar cobranças vencidas antes de listar
+    await cobrancaService.verificarCobrancasVencidas();
     const response = await api.get(`/cobrancas/clientes/${clienteId}/cobrancas`);
     return response.data.map(formatarCobrancaDaAPI);
   },
@@ -119,8 +123,27 @@ const cobrancaService = {
   
   // Verificar cobranças vencidas
   verificarCobrancasVencidas: async (): Promise<any> => {
-    const response = await api.post('/cobrancas/verificar-vencidas');
-    return response.data;
+    console.log("Verificando cobranças vencidas...");
+    try {
+      const response = await api.post('/cobrancas/verificar-vencidas');
+      console.log("Resultado da verificação:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao verificar cobranças vencidas:", error);
+      throw error;
+    }
+  },
+
+  // Função para verificar automaticamente o status das cobranças
+  // Esta função será chamada periodicamente para manter o sistema atualizado
+  verificarStatusAutomaticamente: async (): Promise<void> => {
+    try {
+      console.log("Iniciando verificação automática de status...");
+      await cobrancaService.verificarCobrancasVencidas();
+      console.log("Verificação automática concluída.");
+    } catch (error) {
+      console.error("Erro na verificação automática:", error);
+    }
   }
 };
 

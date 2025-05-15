@@ -21,9 +21,15 @@ const CobrancaStatusBadge = ({ status }: CobrancaStatusBadgeProps) => {
 
   const validStatus = status as 'pendente' | 'pago' | 'atrasado';
   
+  const statusText = {
+    pendente: "Pendente",
+    pago: "Pago",
+    atrasado: "Atrasado"
+  };
+  
   return (
     <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusClasses[validStatus]}`}>
-      {validStatus.charAt(0).toUpperCase() + validStatus.slice(1)}
+      {statusText[validStatus]}
     </span>
   );
 };

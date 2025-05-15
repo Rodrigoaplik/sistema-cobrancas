@@ -1,3 +1,4 @@
+
 const { pool } = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 
@@ -156,6 +157,21 @@ class CobrancaModel {
   async verificarCobrancasVencidas() {
     try {
       const hoje = new Date().toISOString().split('T')[0];
+      console.log(`Verificando cobranças vencidas (antes de ${hoje})...`);
+      
+      // Primeiro, vamos buscar todas as cobranças pendentes com vencimento anterior à data atual
+      const [cobrancasVencidas] = await pool.query(
+        'SELECT id FROM cobrancas WHERE data_vencimento < ? AND status = ?',
+        [hoje, 'pendente']
+      );
+      
+      console.log(`Encontradas ${cobrancasVencidas.length} cobranças vencidas`);
+      
+      if (cobrancasVencidas.length === 0) {
+        return { atualizadas: 0, mensagem: 'Nenhuma cobrança vencida encontrada' };
+      }
+      
+      // Agora, atualizamos todas as cobranças vencidas para o status 'atrasado'
       const query = `
         UPDATE cobrancas
         SET status = 'atrasado'
@@ -163,9 +179,44 @@ class CobrancaModel {
       `;
       
       const [result] = await pool.query(query, [hoje]);
-      return { atualizadas: result.affectedRows };
+      console.log(`Atualizadas ${result.affectedRows} cobranças para status 'atrasado'`);
+      
+      return { 
+        atualizadas: result.affectedRows,
+        cobrancasIds: cobrancasVencidas.map(c => c.id)
+      };
     } catch (error) {
       console.error('Erro ao verificar cobranças vencidas:', error);
+      throw error;
+    }
+  }
+
+  // Recalcular o status de todas as cobranças com base em suas datas
+  async recalcularStatusCobrancas() {
+    try {
+      const hoje = new Date().toISOString().split('T')[0];
+      console.log(`Recalculando status de todas as cobranças (data atual: ${hoje})...`);
+      
+      // 1. Atualizar cobranças vencidas (pendentes com data de vencimento no passado)
+      const [resultVencidas] = await pool.query(
+        `UPDATE cobrancas SET status = 'atrasado' 
+         WHERE data_vencimento < ? AND status = 'pendente'`,
+        [hoje]
+      );
+      
+      // 2. Manter status de cobranças pagas
+      // Não precisamos fazer nada, elas já estão como 'pago'
+      
+      // 3. Cobranças pendentes com data de vencimento futura continuam como 'pendente'
+      // Também não precisamos alterar
+      
+      console.log(`Atualizadas ${resultVencidas.affectedRows} cobranças para 'atrasado'`);
+      
+      return {
+        atualizadasAtrasadas: resultVencidas.affectedRows
+      };
+    } catch (error) {
+      console.error('Erro ao recalcular status das cobranças:', error);
       throw error;
     }
   }

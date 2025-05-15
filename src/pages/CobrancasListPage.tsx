@@ -39,11 +39,11 @@ const CobrancasListPage = () => {
 
   const verificarVencimentosMutation = useMutation({
     mutationFn: () => cobrancaService.verificarCobrancasVencidas(),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["cobrancas", clienteId] });
       toast({
         title: "Verificação de vencimentos concluída",
-        description: "As cobranças foram atualizadas conforme necessário.",
+        description: `${data.atualizadas || 0} cobrança(s) atualizada(s) para status 'atrasado'`,
       });
       setIsVerificandoVencimentos(false);
     },
@@ -51,6 +51,27 @@ const CobrancasListPage = () => {
       setIsVerificandoVencimentos(false);
     }
   });
+
+  // Verificação automática de status quando a página carrega
+  useEffect(() => {
+    const verificarAutomaticamente = async () => {
+      if (clienteId) {
+        try {
+          await cobrancaService.verificarStatusAutomaticamente();
+          // Não recarregamos os dados aqui, pois o próprio serviço já faz isso
+        } catch (error) {
+          console.error("Erro na verificação automática:", error);
+        }
+      }
+    };
+
+    verificarAutomaticamente();
+    
+    // Configurar verificação periódica a cada 5 minutos
+    const intervalId = setInterval(verificarAutomaticamente, 5 * 60 * 1000);
+    
+    return () => clearInterval(intervalId);
+  }, [clienteId, queryClient]);
 
   // Notificar erro de cliente não encontrado
   useEffect(() => {

@@ -77,6 +77,7 @@ const cobrancaService = {
   // Criar uma nova cobrança
   criarCobranca: async (clienteId: string, cobranca: Cobranca): Promise<Cobranca> => {
     const cobrancaFormatada = formatarCobrancaParaAPI(cobranca);
+    console.log("Enviando cobrança para API:", cobrancaFormatada);
     const response = await api.post(`/cobrancas/clientes/${clienteId}/cobrancas`, cobrancaFormatada);
     return formatarCobrancaDaAPI(response.data);
   },
@@ -85,6 +86,7 @@ const cobrancaService = {
   atualizarCobranca: async (id: string, cobranca: Cobranca): Promise<Cobranca> => {
     try {
       const cobrancaFormatada = formatarCobrancaParaAPI(cobranca);
+      console.log("Atualizando cobrança:", id, cobrancaFormatada);
       const response = await api.put(`/cobrancas/${id}`, cobrancaFormatada);
       return formatarCobrancaDaAPI(response.data);
     } catch (error) {
@@ -111,6 +113,7 @@ const cobrancaService = {
         ? dataPagamento.toISOString().split('T')[0] 
         : dataPagamento
     };
+    console.log("Atualizando status da cobrança:", id, data);
     await api.patch(`/cobrancas/${id}/status`, data);
   },
   

@@ -72,6 +72,7 @@ const CobrancaForm = ({ clienteId, cobranca, onSubmit, isSubmitting = false }: C
 
   const handleSubmit = async (data: Cobranca) => {
     try {
+      // Garantir que clienteId seja incluído
       await onSubmit({ ...data, clienteId });
     } catch (error) {
       console.error("Erro ao salvar cobrança:", error);
@@ -148,7 +149,11 @@ const CobrancaForm = ({ clienteId, cobranca, onSubmit, isSubmitting = false }: C
                   <Calendar
                     mode="single"
                     selected={field.value}
-                    onSelect={field.onChange}
+                    onSelect={(date) => {
+                      if (date) {
+                        field.onChange(date);
+                      }
+                    }}
                     initialFocus
                   />
                 </PopoverContent>

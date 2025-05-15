@@ -1,192 +1,211 @@
 
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Send } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Loader2, Mail, MessageSquare } from "lucide-react";
-import notificacaoService from '@/services/notificacaoService';
+import { useMutation, useQuery } from "@tanstack/react-query";
+import notificacaoService from "@/services/notificacaoService";
+import clienteService from "@/services/clienteService";
+import cobrancaService from "@/services/cobrancaService";
+import { format } from "date-fns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface EnviarNotificacaoModalProps {
   clienteId: string;
-  cobrancaId: string;
+  cobrancaId?: string;
   clienteNome?: string;
   valorCobranca?: number;
   descricaoCobranca?: string;
   dataVencimento?: Date | string;
+  disabled?: boolean;
   onSuccess?: () => void;
 }
 
 const EnviarNotificacaoModal = ({
   clienteId,
   cobrancaId,
-  clienteNome = 'Cliente',
-  valorCobranca = 0,
-  descricaoCobranca = 'Cobrança',
-  dataVencimento,
-  onSuccess
+  clienteNome: propClienteNome,
+  valorCobranca: propValorCobranca,
+  descricaoCobranca: propDescricaoCobranca,
+  dataVencimento: propDataVencimento,
+  disabled = false,
+  onSuccess,
 }: EnviarNotificacaoModalProps) => {
-  const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [tipo, setTipo] = useState<'aviso_vencimento' | 'cobranca_vencida'>('aviso_vencimento');
+  const [tipo, setTipo] = useState<'whatsapp' | 'email'>('whatsapp');
+  const [mensagem, setMensagem] = useState('');
+  const [assunto, setAssunto] = useState('');
   const { toast } = useToast();
+  
+  // Buscar cliente com React Query
+  const { data: cliente } = useQuery({
+    queryKey: ["cliente", clienteId],
+    queryFn: () => clienteId ? clienteService.buscarCliente(clienteId) : null,
+    enabled: !!clienteId && !propClienteNome,
+  });
 
-  const dataFormatada = dataVencimento 
-    ? typeof dataVencimento === 'string' 
-      ? new Date(dataVencimento).toLocaleDateString('pt-BR') 
-      : dataVencimento.toLocaleDateString('pt-BR')
-    : 'em breve';
-    
-  const valorFormatado = valorCobranca.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  // Buscar cobrança com React Query
+  const { data: cobranca } = useQuery({
+    queryKey: ["cobranca", cobrancaId],
+    queryFn: () => cobrancaId ? cobrancaService.buscarCobranca(cobrancaId) : null,
+    enabled: !!cobrancaId && (!propValorCobranca || !propDescricaoCobranca || !propDataVencimento),
+  });
+
+  // Preparar dados para exibição
+  const clienteNome = propClienteNome || cliente?.nome || 'Cliente';
+  const valorCobranca = propValorCobranca || cobranca?.valor || 0;
+  const descricaoCobranca = propDescricaoCobranca || cobranca?.descricao || 'Cobrança';
+  const dataVencimento = propDataVencimento || cobranca?.dataVencimento || new Date();
   
-  // Templates de mensagem padrão
-  const [mensagemWhatsapp, setMensagemWhatsapp] = useState('');
-  const [assuntoEmail, setAssuntoEmail] = useState('');
-  const [mensagemEmail, setMensagemEmail] = useState('');
+  const valorFormatado = new Intl.NumberFormat('pt-BR', { 
+    style: 'currency', 
+    currency: 'BRL' 
+  }).format(valorCobranca);
+
+  const dataFormatada = dataVencimento instanceof Date 
+    ? format(dataVencimento, 'dd/MM/yyyy')
+    : format(new Date(dataVencimento), 'dd/MM/yyyy');
+
+  // Modelos de mensagens
+  const modeloWhatsApp = `Olá ${clienteNome},\n\nGostaríamos de lembrá-lo sobre a cobrança referente a "${descricaoCobranca}" no valor de ${valorFormatado} com vencimento em ${dataFormatada}.\n\nPara sua comodidade, disponibilizamos um link de pagamento. Obrigado!`;
   
-  // Atualiza templates quando o tipo muda
+  const modeloEmail = `Prezado(a) ${clienteNome},\n\nEste é um lembrete amigável sobre a cobrança referente a "${descricaoCobranca}" no valor de ${valorFormatado} com data de vencimento em ${dataFormatada}.\n\nPara sua conveniência, disponibilizamos um link para pagamento online.\n\nCaso já tenha efetuado o pagamento, por favor desconsidere esta mensagem.\n\nAtenciosamente,\nEquipe de Cobranças`;
+
+  // Inicializar mensagens quando o modal abrir
   useEffect(() => {
-    if (tipo === 'aviso_vencimento') {
-      setMensagemWhatsapp(`Olá ${clienteNome}, sua cobrança de ${descricaoCobranca} no valor de ${valorFormatado} vence em ${dataFormatada}. Acesse o link para pagamento enviado por e-mail. Obrigado!`);
-      setAssuntoEmail(`Lembrete de Cobrança a Vencer - ${descricaoCobranca}`);
-      setMensagemEmail(`<p>Prezado(a) ${clienteNome},</p><p>Este é um lembrete de que sua cobrança de ${descricaoCobranca} no valor de ${valorFormatado} vencerá em ${dataFormatada}.</p><p>Para sua comodidade, disponibilizamos um link para pagamento no corpo deste e-mail.</p><p>Em caso de dúvidas, estamos à disposição.</p><p>Atenciosamente,<br/>Equipe de Cobranças</p>`);
-    } else {
-      setMensagemWhatsapp(`ATENÇÃO ${clienteNome}, sua cobrança de ${descricaoCobranca} no valor de ${valorFormatado} está VENCIDA desde ${dataFormatada}. Por favor, regularize o pagamento o mais breve possível através do link enviado por e-mail.`);
-      setAssuntoEmail(`URGENTE: Cobrança Vencida - ${descricaoCobranca}`);
-      setMensagemEmail(`<p>Prezado(a) ${clienteNome},</p><p>Informamos que sua cobrança de ${descricaoCobranca} no valor de ${valorFormatado} está <strong>vencida</strong> desde ${dataFormatada}.</p><p>Para evitar juros adicionais, regularize sua situação agora mesmo através do link de pagamento disponível neste e-mail.</p><p>Em caso de dúvidas, entre em contato conosco.</p><p>Atenciosamente,<br/>Equipe de Cobranças</p>`);
+    if (open) {
+      setMensagem(tipo === 'whatsapp' ? modeloWhatsApp : modeloEmail);
+      setAssunto(`Lembrete: Cobrança ${descricaoCobranca}`);
     }
-  }, [tipo, clienteNome, descricaoCobranca, valorFormatado, dataFormatada]);
+  }, [open, tipo]);
 
-  const handleEnviar = async () => {
-    setIsLoading(true);
-    try {
-      const response = await notificacaoService.enviarNotificacao({
-        clienteId,
-        cobrancaId,
-        tipo
-      });
+  // Modificar mensagem quando alterar o tipo (WhatsApp/Email)
+  useEffect(() => {
+    setMensagem(tipo === 'whatsapp' ? modeloWhatsApp : modeloEmail);
+  }, [tipo]);
 
+  // Mutação para enviar notificação
+  const enviarNotificacaoMutation = useMutation({
+    mutationFn: (dados: { clienteId: string; cobrancaId?: string; tipo: string; mensagem: string; assunto?: string }) => 
+      notificacaoService.enviarNotificacaoManual(dados),
+    onSuccess: (data) => {
       toast({
-        title: "Notificação enviada com sucesso!",
-        description: "O cliente foi notificado via WhatsApp e e-mail.",
+        title: "Notificação enviada com sucesso",
+        description: `A mensagem foi enviada para o cliente ${clienteNome}.`,
       });
-
-      if (onSuccess) {
-        onSuccess();
-      }
-      
       setOpen(false);
-    } catch (error) {
-      console.error('Erro ao enviar notificação:', error);
+      onSuccess?.();
+    },
+    onError: (error: any) => {
       toast({
         title: "Erro ao enviar notificação",
-        description: "Não foi possível enviar a notificação para o cliente.",
+        description: error.response?.data?.mensagem || "Não foi possível enviar a notificação.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const handleEnviar = () => {
+    const dados = {
+      clienteId,
+      cobrancaId,
+      tipo: tipo,
+      mensagem,
+      assunto: tipo === 'email' ? assunto : undefined
+    };
+
+    enviarNotificacaoMutation.mutate(dados);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Send className="mr-2 h-4 w-4" />
-          Enviar Notificação
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpen(true)}
+          title="Enviar notificação"
+          disabled={disabled}
+        >
+          <Send className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Enviar Notificação para Cliente</DialogTitle>
-          <DialogDescription>
-            Configure a mensagem que será enviada ao cliente por WhatsApp e e-mail.
-          </DialogDescription>
+          <DialogTitle>Enviar Notificação</DialogTitle>
         </DialogHeader>
-        
         <div className="space-y-4 py-4">
-          <div className="flex space-x-4 items-center">
-            <span className="text-sm font-medium">Tipo de notificação:</span>
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant={tipo === 'aviso_vencimento' ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setTipo('aviso_vencimento')}
-              >
-                Aviso de Vencimento
-              </Button>
-              <Button 
-                variant={tipo === 'cobranca_vencida' ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setTipo('cobranca_vencida')}
-              >
-                Cobrança Vencida
-              </Button>
+          <div className="flex items-center space-x-2">
+            <div className="grid flex-1 gap-2">
+              <Tabs defaultValue="whatsapp" value={tipo} onValueChange={(v) => setTipo(v as 'whatsapp' | 'email')}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+                  <TabsTrigger value="email">Email</TabsTrigger>
+                </TabsList>
+                <TabsContent value="whatsapp" className="space-y-4 mt-4">
+                  <div>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Enviar mensagem para: {cliente?.whatsapp || "Número não disponível"}
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="mensagem-whatsapp">Mensagem</Label>
+                    <Textarea
+                      id="mensagem-whatsapp"
+                      value={mensagem}
+                      onChange={(e) => setMensagem(e.target.value)}
+                      className="min-h-[150px]"
+                    />
+                  </div>
+                </TabsContent>
+                <TabsContent value="email" className="space-y-4 mt-4">
+                  <div>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Enviar email para: {cliente?.email || "Email não disponível"}
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="assunto-email">Assunto</Label>
+                    <Input
+                      id="assunto-email"
+                      value={assunto}
+                      onChange={(e) => setAssunto(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="mensagem-email">Mensagem</Label>
+                    <Textarea
+                      id="mensagem-email"
+                      value={mensagem}
+                      onChange={(e) => setMensagem(e.target.value)}
+                      className="min-h-[150px]"
+                    />
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
-          
-          <Tabs defaultValue="whatsapp" className="w-full">
-            <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="whatsapp">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                WhatsApp
-              </TabsTrigger>
-              <TabsTrigger value="email">
-                <Mail className="mr-2 h-4 w-4" />
-                E-mail
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="whatsapp" className="space-y-2 mt-4">
-              <div className="font-medium text-sm">Mensagem WhatsApp</div>
-              <Textarea
-                value={mensagemWhatsapp}
-                onChange={(e) => setMensagemWhatsapp(e.target.value)}
-                rows={5}
-              />
-            </TabsContent>
-            
-            <TabsContent value="email" className="space-y-2 mt-4">
-              <div>
-                <div className="font-medium text-sm">Assunto</div>
-                <Textarea 
-                  value={assuntoEmail}
-                  onChange={(e) => setAssuntoEmail(e.target.value)}
-                  rows={1}
-                  className="mb-4"
-                />
-                
-                <div className="font-medium text-sm">Corpo do E-mail</div>
-                <Textarea 
-                  value={mensagemEmail}
-                  onChange={(e) => setMensagemEmail(e.target.value)}
-                  rows={8}
-                />
-                <div className="text-xs text-muted-foreground mt-1">
-                  *Formatação HTML suportada
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
         </div>
-        
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleEnviar} disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                Enviar Notificação
-              </>
-            )}
+          <Button 
+            onClick={handleEnviar}
+            disabled={enviarNotificacaoMutation.isPending || !mensagem || (tipo === 'email' && !assunto)}
+          >
+            {enviarNotificacaoMutation.isPending ? "Enviando..." : "Enviar"}
           </Button>
         </DialogFooter>
       </DialogContent>

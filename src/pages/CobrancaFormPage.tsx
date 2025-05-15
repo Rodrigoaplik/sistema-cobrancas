@@ -109,6 +109,8 @@ const CobrancaFormPage = () => {
   const handleSubmit = async (data: Cobranca) => {
     if (!clienteId) return;
     
+    console.log("Submetendo cobrança:", data);
+    
     // Garantir que o status seja um dos valores válidos do tipo
     const status = data.status as 'pendente' | 'pago' | 'atrasado';
     const cobrancaData = { ...data, status };

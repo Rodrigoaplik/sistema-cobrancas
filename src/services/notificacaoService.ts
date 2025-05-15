@@ -1,66 +1,50 @@
 
 import api from './api';
 
-// Interface para opções de notificação
-export interface NotificacaoOptions {
+interface NotificacaoParams {
   clienteId: string;
-  cobrancaId: string;
-  tipo: 'aviso_vencimento' | 'cobranca_vencida';
-  mensagemWhatsapp?: string;
-  assuntoEmail?: string;
-  mensagemEmail?: string;
+  cobrancaId?: string;
+  tipo: string;
+  mensagem: string;
+  assunto?: string;
 }
 
-// Interface para resposta de notificação
-export interface NotificacaoResponse {
+interface NotificacaoResponse {
   success: boolean;
   message: string;
   linkPagamento?: string;
 }
 
 const notificacaoService = {
-  // Enviar notificação ao cliente (via WhatsApp e/ou e-mail)
-  enviarNotificacao: async (options: NotificacaoOptions): Promise<NotificacaoResponse> => {
+  // Enviar lembrete de vencimento para cliente
+  enviarLembreteVencimento: async (clienteId: string, cobrancaId: string): Promise<NotificacaoResponse> => {
     try {
-      const response = await api.post('/notificacoes/enviar', options);
+      const response = await api.post(`/notificacoes/lembrete/${clienteId}/${cobrancaId}`);
       return response.data;
     } catch (error) {
-      console.error('Erro ao enviar notificação:', error);
+      console.error('Erro ao enviar lembrete de vencimento:', error);
       throw error;
     }
   },
 
-  // Enviar notificação personalizada
-  enviarNotificacaoPersonalizada: async (options: NotificacaoOptions): Promise<NotificacaoResponse> => {
+  // Enviar notificação de cobrança vencida
+  enviarNotificacaoVencimento: async (clienteId: string, cobrancaId: string): Promise<NotificacaoResponse> => {
     try {
-      const response = await api.post('/notificacoes/enviar-manual', options);
+      const response = await api.post(`/notificacoes/vencimento/${clienteId}/${cobrancaId}`);
       return response.data;
     } catch (error) {
-      console.error('Erro ao enviar notificação personalizada:', error);
+      console.error('Erro ao enviar notificação de vencimento:', error);
       throw error;
     }
   },
-
-  // Gerar link de pagamento
-  gerarLinkPagamento: async (cobrancaId: string, metodoPagamento: 'pix' | 'cartao'): Promise<string> => {
+  
+  // Enviar notificação manual (personalizada pelo usuário)
+  enviarNotificacaoManual: async (params: NotificacaoParams): Promise<NotificacaoResponse> => {
     try {
-      const response = await api.post(`/pagamentos/gerar-link`, {
-        cobrancaId,
-        metodoPagamento
-      });
-      return response.data.linkPagamento;
+      const response = await api.post(`/clientes/${params.clienteId}/notificar`, params);
+      return response.data;
     } catch (error) {
-      console.error('Erro ao gerar link de pagamento:', error);
-      throw error;
-    }
-  },
-
-  // Verificar cobranças prestes a vencer para notificação automática
-  verificarCobrancasParaNotificar: async (): Promise<void> => {
-    try {
-      await api.post('/notificacoes/verificar-vencimentos');
-    } catch (error) {
-      console.error('Erro ao verificar cobranças para notificação:', error);
+      console.error('Erro ao enviar notificação manual:', error);
       throw error;
     }
   }

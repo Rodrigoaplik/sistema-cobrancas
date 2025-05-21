@@ -3,17 +3,20 @@ const express = require('express');
 const clienteRoutes = require('./clienteRoutes');
 const cobrancaRoutes = require('./cobrancaRoutes');
 const notificacaoRoutes = require('./notificacaoRoutes');
+const authRoutes = require('./authRoutes');
+const { verificarToken } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Rotas para recursos da API
+// Rotas públicas
+router.use('/auth', authRoutes);
+
+// Middleware de autenticação para todas as rotas abaixo
+router.use(verificarToken);
+
+// Rotas protegidas
 router.use('/clientes', clienteRoutes);
 router.use('/cobrancas', cobrancaRoutes);
 router.use('/notificacoes', notificacaoRoutes);
-
-// Rota de status
-router.get('/status', (req, res) => {
-  res.status(200).json({ status: 'API funcionando corretamente' });
-});
 
 module.exports = router;

@@ -11,6 +11,7 @@ import ClientesListPage from "./pages/ClientesListPage";
 import ClienteFormPage from "./pages/ClienteFormPage";
 import CobrancasListPage from "./pages/CobrancasListPage";
 import CobrancaFormPage from "./pages/CobrancaFormPage";
+import RelatoriosPage from "./pages/RelatoriosPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/clientes/:clienteId/cobrancas/novo" element={<Navigate to="../nova" replace />} />
             <Route path="/clientes/:clienteId/cobrancas/:cobrancaId" element={<CobrancaFormPage />} />
             <Route path="/clientes/:clienteId/cobrancas/editar/:cobrancaId" element={<CobrancaFormPage />} />
+            <Route path="/relatorios" element={<RelatoriosPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

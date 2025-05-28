@@ -12,6 +12,9 @@ import ClienteFormPage from "./pages/ClienteFormPage";
 import CobrancasListPage from "./pages/CobrancasListPage";
 import CobrancaFormPage from "./pages/CobrancaFormPage";
 import RelatoriosPage from "./pages/RelatoriosPage";
+import LoginPage from "./pages/LoginPage";
+import AdminLoginPage from "./pages/AdminLoginPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +32,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Rotas de autenticação */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          
+          {/* Rotas protegidas com layout */}
           <Route element={<Layout />}>
             <Route path="/" element={<Index />} />
             <Route path="/clientes" element={<ClientesListPage />} />

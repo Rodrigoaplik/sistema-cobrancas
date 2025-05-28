@@ -1,96 +1,124 @@
 
-import api from './api';
+import axios from 'axios';
+import { AuthUser } from '@/types';
 
-export interface Usuario {
-  id: string;
-  nome: string;
-  email: string;
-  role: string;
-}
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export interface AuthResponse {
-  user: Usuario;
-  token: string;
-}
+class AuthService {
+  private token: string | null = null;
+  private user: AuthUser | null = null;
 
-const authService = {
-  login: async (email: string, senha: string): Promise<AuthResponse> => {
-    try {
-      const response = await api.post('/auth/login', { email, senha });
-      const { token, user } = response.data;
-      
-      // Armazenar token JWT e dados do usuário no localStorage
-      localStorage.setItem('@app:token', token);
-      localStorage.setItem('@app:user', JSON.stringify(user));
-      
-      // Adicionar o token JWT no cabeçalho padrão para requisições futuras
-      api.defaults.headers.authorization = `Bearer ${token}`;
-      
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao realizar login:', error);
-      throw error;
+  constructor() {
+    this.token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      this.user = JSON.parse(savedUser);
     }
-  },
-  
-  logout: () => {
-    localStorage.removeItem('@app:token');
-    localStorage.removeItem('@app:user');
-    api.defaults.headers.authorization = '';
-  },
-  
-  isAuthenticated: (): boolean => {
-    const token = localStorage.getItem('@app:token');
-    return !!token;
-  },
-  
-  getToken: (): string | null => {
-    return localStorage.getItem('@app:token');
-  },
-  
-  getUser: (): Usuario | null => {
-    const userStr = localStorage.getItem('@app:user');
-    return userStr ? JSON.parse(userStr) : null;
-  },
-  
-  // Verificar o token atual (útil para verificar se o token expirou)
-  verificarToken: async (): Promise<boolean> => {
+  }
+
+  async login(email: string, senha: string): Promise<{ user: AuthUser; token: string }> {
     try {
-      const token = localStorage.getItem('@app:token');
-      if (!token) return false;
+      const response = await axios.post(`${API_URL}/auth/login`, {
+        email,
+        senha
+      });
+
+      const { user, token } = response.data;
       
-      const response = await api.get('/auth/verify');
-      return response.status === 200;
+      this.token = token;
+      this.user = user;
+      
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Configurar token padrão para futuras requisições
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      return { user, token };
+    } catch (error: any) {
+      throw new Error(error.response?.data?.erro || 'Erro ao fazer login');
+    }
+  }
+
+  async loginAdmin(email: string, senha: string): Promise<{ user: AuthUser; token: string }> {
+    const result = await this.login(email, senha);
+    
+    if (result.user.role !== 'admin') {
+      this.logout();
+      throw new Error('Acesso negado. Apenas administradores podem acessar esta área.');
+    }
+    
+    return result;
+  }
+
+  async register(userData: {
+    nome: string;
+    email: string;
+    senha: string;
+    role?: 'empresa' | 'usuario';
+    empresaId?: string;
+  }): Promise<{ user: AuthUser }> {
+    try {
+      const response = await axios.post(`${API_URL}/auth/registrar`, userData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.erro || 'Erro ao criar usuário');
+    }
+  }
+
+  async verifyToken(): Promise<boolean> {
+    if (!this.token) return false;
+
+    try {
+      const response = await axios.get(`${API_URL}/auth/verify`, {
+        headers: { Authorization: `Bearer ${this.token}` }
+      });
+      
+      if (response.data.valid) {
+        this.user = response.data.user;
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        return true;
+      }
+      
+      this.logout();
+      return false;
     } catch (error) {
-      console.error('Erro ao verificar token:', error);
+      this.logout();
       return false;
     }
   }
-};
 
-// Configurar interceptor para requisições
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('@app:token');
-    if (token) {
-      config.headers.authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Configurar interceptor para respostas
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expirado ou inválido
-      authService.logout();
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
+  logout(): void {
+    this.token = null;
+    this.user = null;
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    delete axios.defaults.headers.common['Authorization'];
   }
-);
 
-export default authService;
+  getToken(): string | null {
+    return this.token;
+  }
+
+  getUser(): AuthUser | null {
+    return this.user;
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.token && !!this.user;
+  }
+
+  isAdmin(): boolean {
+    return this.user?.role === 'admin';
+  }
+
+  isEmpresa(): boolean {
+    return this.user?.role === 'empresa';
+  }
+
+  getUserEmpresaId(): string | null {
+    return this.user?.empresaId || null;
+  }
+}
+
+export const authService = new AuthService();

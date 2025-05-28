@@ -58,30 +58,9 @@ export function DateRangePicker({
             }}
             initialFocus
             numberOfMonths={2}
-            locale={ptBR}
           />
         </PopoverContent>
       </Popover>
     </div>
   );
 }
-
-// Configuração para o calendário em português
-const ptBR = {
-  locale: "pt-BR",
-  weekdays: ["D", "S", "T", "Q", "Q", "S", "S"],
-  months: [
-    "Janeiro",
-    "Fevereiro",
-    "Março", 
-    "Abril", 
-    "Maio", 
-    "Junho", 
-    "Julho", 
-    "Agosto", 
-    "Setembro", 
-    "Outubro", 
-    "Novembro", 
-    "Dezembro"
-  ],
-};

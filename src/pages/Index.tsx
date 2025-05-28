@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Building2, Shield, Users } from "lucide-react";
 
 const Index = () => {
   return (
@@ -19,13 +20,65 @@ const Index = () => {
           <p className="mt-5 max-w-xl mx-auto text-xl text-gray-800 font-medium">
             Gerencie seus clientes e pagamentos de forma eficiente.
           </p>
-          <div className="mt-8 flex justify-center gap-4">
-            <Button asChild size="lg" className="shadow-lg hover:shadow-xl transition-all">
-              <Link to="/clientes">Ver Clientes</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="bg-white/60 border-gray-400 text-gray-800 hover:bg-white/80 shadow-lg hover:shadow-xl transition-all">
-              <Link to="/clientes/novo">Cadastrar Cliente</Link>
-            </Button>
+          
+          {/* Seção de Login */}
+          <div className="mt-8 space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900">Acesse sua conta</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+              {/* Login Empresa */}
+              <div className="bg-white/60 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <Building2 className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Empresas</h3>
+                  <p className="text-sm text-gray-700 text-center">
+                    Acesse o sistema para gerenciar suas cobranças e clientes
+                  </p>
+                  <Button asChild className="w-full shadow-lg hover:shadow-xl transition-all">
+                    <Link to="/login">
+                      <Users className="mr-2 h-4 w-4" />
+                      Login Empresa
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Login Administrador */}
+              <div className="bg-white/60 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="p-3 bg-red-100 rounded-full">
+                    <Shield className="h-8 w-8 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Administrador</h3>
+                  <p className="text-sm text-gray-700 text-center">
+                    Painel administrativo para gerenciar empresas e usuários
+                  </p>
+                  <Button asChild variant="outline" className="w-full bg-white/60 border-red-300 text-red-700 hover:bg-red-50 shadow-lg hover:shadow-xl transition-all">
+                    <Link to="/admin/login">
+                      <Shield className="mr-2 h-4 w-4" />
+                      Login Admin
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Seção de Ações Rápidas */}
+          <div className="mt-8 pt-6 border-t border-gray-300">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Acesso Rápido</h3>
+            <div className="flex justify-center gap-4 flex-wrap">
+              <Button asChild size="lg" variant="outline" className="bg-white/60 border-gray-400 text-gray-800 hover:bg-white/80 shadow-lg hover:shadow-xl transition-all">
+                <Link to="/clientes">Ver Clientes</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="bg-white/60 border-gray-400 text-gray-800 hover:bg-white/80 shadow-lg hover:shadow-xl transition-all">
+                <Link to="/clientes/novo">Cadastrar Cliente</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="bg-white/60 border-gray-400 text-gray-800 hover:bg-white/80 shadow-lg hover:shadow-xl transition-all">
+                <Link to="/relatorios">Relatórios</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

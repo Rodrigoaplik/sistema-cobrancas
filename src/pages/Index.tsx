@@ -1,9 +1,104 @@
 
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Building2, Shield, Users } from "lucide-react";
+import { Building2, Shield, Users, Plus, FileText, BarChart3 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
+  const { isAuthenticated, user } = useAuth();
+
+  if (isAuthenticated && user?.role === 'empresa') {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Bem-vindo, {user.nome}!
+          </h1>
+          <p className="text-gray-600">
+            Gerencie seus clientes e cobranças de forma eficiente
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {/* Card Clientes */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                Clientes
+              </CardTitle>
+              <CardDescription>
+                Gerencie seus clientes cadastrados
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button asChild className="w-full">
+                <Link to="/clientes">
+                  Ver Clientes
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/clientes/novo">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Novo Cliente
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Card Relatórios */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-green-600" />
+                Relatórios
+              </CardTitle>
+              <CardDescription>
+                Visualize dados e estatísticas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <Link to="/relatorios">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Ver Relatórios
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Card Ações Rápidas */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-purple-600" />
+                Ações Rápidas
+              </CardTitle>
+              <CardDescription>
+                Acesso rápido às principais funções
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button asChild variant="outline" size="sm" className="w-full justify-start">
+                <Link to="/clientes">
+                  <Users className="mr-2 h-4 w-4" />
+                  Listar Clientes
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="w-full justify-start">
+                <Link to="/relatorios">
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  Dashboard
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center" 
@@ -62,22 +157,6 @@ const Index = () => {
                   </Button>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Seção de Ações Rápidas */}
-          <div className="mt-8 pt-6 border-t border-gray-300">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Acesso Rápido</h3>
-            <div className="flex justify-center gap-4 flex-wrap">
-              <Button asChild size="lg" variant="outline" className="bg-white/60 border-gray-400 text-gray-800 hover:bg-white/80 shadow-lg hover:shadow-xl transition-all">
-                <Link to="/clientes">Ver Clientes</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="bg-white/60 border-gray-400 text-gray-800 hover:bg-white/80 shadow-lg hover:shadow-xl transition-all">
-                <Link to="/clientes/novo">Cadastrar Cliente</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="bg-white/60 border-gray-400 text-gray-800 hover:bg-white/80 shadow-lg hover:shadow-xl transition-all">
-                <Link to="/relatorios">Relatórios</Link>
-              </Button>
             </div>
           </div>
         </div>

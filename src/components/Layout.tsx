@@ -1,14 +1,25 @@
 
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut, User } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Layout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
   
   const isActive = (path: string) => {
     return location.pathname.startsWith(path);
@@ -16,6 +27,11 @@ const Layout = () => {
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -27,54 +43,76 @@ const Layout = () => {
               Sistema de Cobranças
             </Link>
             
-            {isMobile ? (
-              <button 
-                onClick={toggleMobileMenu}
-                className="p-2 rounded-md text-gray-700 hover:bg-gray-100"
-              >
-                {mobileMenuOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
-                )}
-              </button>
-            ) : (
-              <nav className="flex space-x-4">
-                <Link
-                  to="/clientes"
-                  className={cn(
-                    "px-3 py-2 rounded-md text-sm font-medium",
-                    isActive("/clientes")
-                      ? "bg-primary text-primary-foreground"
-                      : "text-gray-700 hover:bg-gray-100"
-                  )}
+            <div className="flex items-center gap-4">
+              {isMobile ? (
+                <button 
+                  onClick={toggleMobileMenu}
+                  className="p-2 rounded-md text-gray-700 hover:bg-gray-100"
                 >
-                  Clientes
-                </Link>
-                <Link
-                  to="/relatorios"
-                  className={cn(
-                    "px-3 py-2 rounded-md text-sm font-medium",
-                    isActive("/relatorios")
-                      ? "bg-primary text-primary-foreground"
-                      : "text-gray-700 hover:bg-gray-100"
+                  {mobileMenuOpen ? (
+                    <X className="h-6 w-6" />
+                  ) : (
+                    <Menu className="h-6 w-6" />
                   )}
-                >
-                  Relatórios
-                </Link>
-                <Link
-                  to="/"
-                  className={cn(
-                    "px-3 py-2 rounded-md text-sm font-medium",
-                    location.pathname === "/"
-                      ? "bg-primary text-primary-foreground"
-                      : "text-gray-700 hover:bg-gray-100"
-                  )}
-                >
-                  Início
-                </Link>
-              </nav>
-            )}
+                </button>
+              ) : (
+                <nav className="flex space-x-4">
+                  <Link
+                    to="/clientes"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium",
+                      isActive("/clientes")
+                        ? "bg-primary text-primary-foreground"
+                        : "text-gray-700 hover:bg-gray-100"
+                    )}
+                  >
+                    Clientes
+                  </Link>
+                  <Link
+                    to="/relatorios"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium",
+                      isActive("/relatorios")
+                        ? "bg-primary text-primary-foreground"
+                        : "text-gray-700 hover:bg-gray-100"
+                    )}
+                  >
+                    Relatórios
+                  </Link>
+                  <Link
+                    to="/"
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium",
+                      location.pathname === "/"
+                        ? "bg-primary text-primary-foreground"
+                        : "text-gray-700 hover:bg-gray-100"
+                    )}
+                  >
+                    Início
+                  </Link>
+                </nav>
+              )}
+
+              {/* Menu do usuário */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline">{user?.nome}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <div className="px-2 py-1.5 text-sm text-gray-500">
+                    {user?.email}
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
           
           {/* Menu móvel */}

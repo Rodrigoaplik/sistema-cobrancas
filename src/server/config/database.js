@@ -14,7 +14,7 @@ const dbConfig = {
   timezone: 'Z'
 };
 
-console.log('Configuração do banco:', {
+console.log('🔧 Configuração do banco:', {
   host: dbConfig.host,
   user: dbConfig.user,
   database: dbConfig.database,
@@ -33,15 +33,35 @@ async function testConnection() {
     connection.release();
   } catch (error) {
     console.error('❌ Erro ao conectar ao banco de dados:', error.message);
-    console.error('Verifique se:');
-    console.error('1. O MySQL está rodando');
-    console.error('2. As credenciais no arquivo .env estão corretas');
-    console.error('3. O banco de dados foi criado');
+    console.error('📝 Verifique se:');
+    console.error('   1. O MySQL está rodando');
+    console.error('   2. As credenciais no arquivo .env estão corretas');
+    console.error('   3. O banco de dados foi criado');
+    console.error('   4. A senha do usuário root está correta');
     process.exit(1);
+  }
+}
+
+// Função para criar o banco se não existir
+async function createDatabaseIfNotExists() {
+  try {
+    const connectionWithoutDB = await mysql.createConnection({
+      host: dbConfig.host,
+      user: dbConfig.user,
+      password: dbConfig.password
+    });
+    
+    await connectionWithoutDB.execute(`CREATE DATABASE IF NOT EXISTS ${dbConfig.database}`);
+    console.log(`✅ Banco '${dbConfig.database}' verificado/criado com sucesso!`);
+    await connectionWithoutDB.end();
+  } catch (error) {
+    console.error('❌ Erro ao criar/verificar banco:', error.message);
+    throw error;
   }
 }
 
 module.exports = {
   pool,
-  testConnection
+  testConnection,
+  createDatabaseIfNotExists
 };

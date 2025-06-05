@@ -1,120 +1,128 @@
 
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const usuarioModel = require('../models/usuarioModel');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'sua_chave_secreta_aqui'; // Em produção, usar variável de ambiente
-const TOKEN_EXPIRATION = '24h'; // Token expira em 24 horas
-
 class AuthController {
-  // Login de usuário
   async login(req, res) {
     try {
       const { email, senha } = req.body;
-      
-      // Validar os dados de entrada
+
       if (!email || !senha) {
         return res.status(400).json({ erro: 'Email e senha são obrigatórios' });
       }
-      
-      // Buscar usuário pelo email
+
+      // Buscar usuário por email
       const usuario = await usuarioModel.findByEmail(email);
       if (!usuario) {
-        return res.status(401).json({ erro: 'Usuário não encontrado' });
-      }
-      
-      // Verificar se a senha está correta
-      const senhaCorreta = await bcrypt.compare(senha, usuario.senha_hash);
-      if (!senhaCorreta) {
         return res.status(401).json({ erro: 'Credenciais inválidas' });
       }
-      
+
+      // Verificar senha
+      const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
+      if (!senhaValida) {
+        return res.status(401).json({ erro: 'Credenciais inválidas' });
+      }
+
       // Gerar token JWT
       const token = jwt.sign(
         { 
-          userId: usuario.id, 
-          email: usuario.email,
-          role: usuario.role 
-        }, 
-        JWT_SECRET, 
-        { expiresIn: TOKEN_EXPIRATION }
+          id: usuario.id, 
+          email: usuario.email, 
+          role: usuario.role,
+          empresaId: usuario.empresa_id 
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' }
       );
-      
-      // Remover senha antes de enviar resposta
-      const { senha_hash, ...usuarioSemSenha } = usuario;
-      
-      res.status(200).json({
-        message: 'Login realizado com sucesso',
-        token,
-        user: usuarioSemSenha
+
+      // Remover senha do objeto de resposta
+      const { senha_hash, ...usuarioSeguro } = usuario;
+
+      res.json({ 
+        user: {
+          id: usuarioSeguro.id,
+          nome: usuarioSeguro.nome,
+          email: usuarioSeguro.email,
+          role: usuarioSeguro.role,
+          empresaId: usuarioSeguro.empresa_id,
+          empresaNome: usuarioSeguro.empresa_nome
+        }, 
+        token 
       });
     } catch (error) {
       console.error('Erro no login:', error);
-      res.status(500).json({
-        erro: 'Erro interno do servidor ao processar login',
-        mensagem: error.message
-      });
+      res.status(500).json({ erro: 'Erro interno do servidor' });
     }
   }
 
-  // Verificar se o token é válido
-  async verificarToken(req, res) {
-    try {
-      // O middleware de autenticação já teria validado o token
-      // Esta rota só é acessível com um token válido
-      res.status(200).json({
-        valid: true,
-        user: req.user
-      });
-    } catch (error) {
-      console.error('Erro na verificação de token:', error);
-      res.status(401).json({
-        erro: 'Token inválido',
-        mensagem: error.message
-      });
-    }
-  }
-  
-  // Registrar novo usuário
   async registrar(req, res) {
     try {
-      const { nome, email, senha, role = 'usuario' } = req.body;
-      
-      // Validar os dados de entrada
+      const { nome, email, senha, role = 'usuario', empresaId } = req.body;
+
       if (!nome || !email || !senha) {
         return res.status(400).json({ erro: 'Nome, email e senha são obrigatórios' });
       }
-      
-      // Verificar se o email já está em uso
+
+      // Verificar se o email já existe
       const usuarioExistente = await usuarioModel.findByEmail(email);
       if (usuarioExistente) {
-        return res.status(409).json({ erro: 'Este email já está em uso' });
+        return res.status(400).json({ erro: 'Email já cadastrado' });
       }
-      
+
       // Hash da senha
       const senhaHash = await bcrypt.hash(senha, 10);
-      
-      // Criar o novo usuário
+
+      // Criar usuário
       const novoUsuario = await usuarioModel.create({
         nome,
         email,
         senha_hash: senhaHash,
-        role
+        role,
+        empresa_id: empresaId
       });
-      
-      // Remover senha antes de enviar resposta
-      const { senha_hash, ...usuarioSemSenha } = novoUsuario;
-      
-      res.status(201).json({
-        message: 'Usuário criado com sucesso',
-        user: usuarioSemSenha
+
+      // Remover senha do objeto de resposta
+      const { senha_hash, ...usuarioSeguro } = novoUsuario;
+
+      res.status(201).json({ user: usuarioSeguro });
+    } catch (error) {
+      console.error('Erro ao registrar usuário:', error);
+      res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+  }
+
+  async verificarToken(req, res) {
+    try {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+
+      if (!token) {
+        return res.status(401).json({ valid: false, erro: 'Token não fornecido' });
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const usuario = await usuarioModel.findById(decoded.id);
+
+      if (!usuario) {
+        return res.status(401).json({ valid: false, erro: 'Usuário não encontrado' });
+      }
+
+      const { senha_hash, ...usuarioSeguro } = usuario;
+
+      res.json({ 
+        valid: true, 
+        user: {
+          id: usuarioSeguro.id,
+          nome: usuarioSeguro.nome,
+          email: usuarioSeguro.email,
+          role: usuarioSeguro.role,
+          empresaId: usuarioSeguro.empresa_id,
+          empresaNome: usuarioSeguro.empresa_nome
+        }
       });
     } catch (error) {
-      console.error('Erro no registro de usuário:', error);
-      res.status(500).json({
-        erro: 'Erro interno do servidor ao registrar usuário',
-        mensagem: error.message
-      });
+      console.error('Erro ao verificar token:', error);
+      res.status(401).json({ valid: false, erro: 'Token inválido' });
     }
   }
 }

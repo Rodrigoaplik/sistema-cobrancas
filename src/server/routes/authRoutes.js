@@ -1,15 +1,16 @@
 
 const express = require('express');
 const authController = require('../controllers/authController');
-const { verificarToken } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// Rotas públicas
-router.post('/login', authController.login.bind(authController));
-router.post('/registrar', authController.registrar.bind(authController));
+// Rota de login
+router.post('/login', authController.login);
 
-// Rotas protegidas
-router.get('/verify', verificarToken, authController.verificarToken.bind(authController));
+// Rota de registro
+router.post('/registrar', authController.registrar);
+
+// Rota de verificação de token
+router.get('/verify', authController.verificarToken);
 
 module.exports = router;

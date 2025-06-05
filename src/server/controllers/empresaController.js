@@ -1,137 +1,111 @@
 
-const bcrypt = require('bcrypt');
-const { v4: uuidv4 } = require('uuid');
 const empresaModel = require('../models/empresaModel');
-const usuarioModel = require('../models/usuarioModel');
 
 class EmpresaController {
-  // Criar nova empresa com usuário administrador
-  async createEmpresaWithUser(req, res) {
+  async listarEmpresas(req, res) {
     try {
-      const { empresa, usuario } = req.body;
-      
-      // Validar dados obrigatórios
-      if (!empresa.nome || !empresa.email || !empresa.telefone) {
-        return res.status(400).json({ erro: 'Nome, email e telefone da empresa são obrigatórios' });
+      // Apenas admins podem listar todas as empresas
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ erro: 'Acesso negado' });
       }
-      
-      if (!usuario.nome || !usuario.email || !usuario.senha) {
-        return res.status(400).json({ erro: 'Nome, email e senha do usuário são obrigatórios' });
-      }
-      
-      // Verificar se email da empresa já existe
-      const empresaExistente = await empresaModel.findByEmail(empresa.email);
-      if (empresaExistente) {
-        return res.status(409).json({ erro: 'Este email de empresa já está em uso' });
-      }
-      
-      // Verificar se email do usuário já existe
-      const usuarioExistente = await usuarioModel.findByEmail(usuario.email);
-      if (usuarioExistente) {
-        return res.status(409).json({ erro: 'Este email de usuário já está em uso' });
-      }
-      
-      // Criar a empresa
-      const empresaId = uuidv4();
-      const novaEmpresa = await empresaModel.create({
-        id: empresaId,
-        ...empresa
-      });
-      
-      // Hash da senha do usuário
-      const senhaHash = await bcrypt.hash(usuario.senha, 10);
-      
-      // Criar o usuário administrador da empresa
-      const novoUsuario = await usuarioModel.create({
-        nome: usuario.nome,
-        email: usuario.email,
-        senha_hash: senhaHash,
-        role: 'empresa',
-        empresa_id: empresaId
-      });
-      
-      // Remover senha antes de enviar resposta
-      const { senha_hash, ...usuarioSemSenha } = novoUsuario;
-      
-      res.status(201).json({
-        message: 'Empresa e usuário criados com sucesso',
-        empresa: novaEmpresa,
-        usuario: usuarioSemSenha
-      });
-    } catch (error) {
-      console.error('Erro ao criar empresa:', error);
-      res.status(500).json({
-        erro: 'Erro interno do servidor ao criar empresa',
-        mensagem: error.message
-      });
-    }
-  }
-  
-  // Listar todas as empresas (apenas admin)
-  async getAll(req, res) {
-    try {
+
       const empresas = await empresaModel.findAll();
-      res.status(200).json(empresas);
+      res.json(empresas);
     } catch (error) {
-      console.error('Erro ao buscar empresas:', error);
-      res.status(500).json({
-        erro: 'Erro interno do servidor ao buscar empresas',
-        mensagem: error.message
-      });
+      console.error('Erro ao listar empresas:', error);
+      res.status(500).json({ erro: 'Erro interno do servidor' });
     }
   }
-  
-  // Buscar empresa por ID
-  async getById(req, res) {
+
+  async buscarEmpresa(req, res) {
     try {
       const { id } = req.params;
+      
+      // Admin pode ver qualquer empresa, outros usuários apenas a própria
+      if (req.user.role !== 'admin' && req.user.empresaId !== id) {
+        return res.status(403).json({ erro: 'Acesso negado' });
+      }
+
       const empresa = await empresaModel.findById(id);
       
       if (!empresa) {
         return res.status(404).json({ erro: 'Empresa não encontrada' });
       }
-      
-      res.status(200).json(empresa);
+
+      res.json(empresa);
     } catch (error) {
       console.error('Erro ao buscar empresa:', error);
-      res.status(500).json({
-        erro: 'Erro interno do servidor ao buscar empresa',
-        mensagem: error.message
-      });
+      res.status(500).json({ erro: 'Erro interno do servidor' });
     }
   }
-  
-  // Atualizar empresa
-  async update(req, res) {
+
+  async criarEmpresa(req, res) {
+    try {
+      // Apenas admins podem criar empresas
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ erro: 'Acesso negado' });
+      }
+
+      const empresa = await empresaModel.create(req.body);
+      res.status(201).json(empresa);
+    } catch (error) {
+      console.error('Erro ao criar empresa:', error);
+      res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+  }
+
+  async atualizarEmpresa(req, res) {
     try {
       const { id } = req.params;
-      const dadosEmpresa = req.body;
       
-      const empresaAtualizada = await empresaModel.update(id, dadosEmpresa);
-      res.status(200).json({
-        message: 'Empresa atualizada com sucesso',
-        empresa: empresaAtualizada
-      });
+      // Admin pode atualizar qualquer empresa, outros usuários apenas a própria
+      if (req.user.role !== 'admin' && req.user.empresaId !== id) {
+        return res.status(403).json({ erro: 'Acesso negado' });
+      }
+
+      const empresa = await empresaModel.update(id, req.body);
+      res.json(empresa);
     } catch (error) {
       console.error('Erro ao atualizar empresa:', error);
-      res.status(500).json({
-        erro: 'Erro interno do servidor ao atualizar empresa',
-        mensagem: error.message
-      });
+      if (error.message === 'Empresa não encontrada') {
+        return res.status(404).json({ erro: error.message });
+      }
+      res.status(500).json({ erro: 'Erro interno do servidor' });
     }
   }
-  
-  // Buscar estatísticas das empresas
-  async getStats(req, res) {
+
+  async excluirEmpresa(req, res) {
     try {
-      const stats = await empresaModel.getStats();
-      res.status(200).json(stats);
+      // Apenas admins podem excluir empresas
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ erro: 'Acesso negado' });
+      }
+
+      const { id } = req.params;
+      
+      await empresaModel.delete(id);
+      res.json({ mensagem: 'Empresa excluída com sucesso' });
     } catch (error) {
-      console.error('Erro ao buscar estatísticas:', error);
-      res.status(500).json({
-        erro: 'Erro interno do servidor ao buscar estatísticas',
-        mensagem: error.message
-      });
+      console.error('Erro ao excluir empresa:', error);
+      if (error.message === 'Empresa não encontrada') {
+        return res.status(404).json({ erro: error.message });
+      }
+      res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+  }
+
+  async obterEstatisticas(req, res) {
+    try {
+      // Apenas admins podem ver estatísticas gerais
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ erro: 'Acesso negado' });
+      }
+
+      const stats = await empresaModel.getStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Erro ao obter estatísticas:', error);
+      res.status(500).json({ erro: 'Erro interno do servidor' });
     }
   }
 }

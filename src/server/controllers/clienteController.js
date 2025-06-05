@@ -2,103 +2,101 @@
 const clienteModel = require('../models/clienteModel');
 
 class ClienteController {
-  // Listar todos os clientes
   async listarClientes(req, res) {
     try {
-      const clientes = await clienteModel.findAll();
-      res.status(200).json(clientes);
+      let clientes;
+      
+      if (req.user.role === 'admin') {
+        clientes = await clienteModel.findAll();
+      } else {
+        clientes = await clienteModel.findByEmpresa(req.user.empresaId);
+      }
+
+      res.json(clientes);
     } catch (error) {
       console.error('Erro ao listar clientes:', error);
-      res.status(500).json({
-        erro: 'Erro interno do servidor ao buscar clientes',
-        mensagem: error.message
-      });
+      res.status(500).json({ erro: 'Erro interno do servidor' });
     }
   }
 
-  // Buscar cliente por ID
   async buscarCliente(req, res) {
     try {
       const { id } = req.params;
-      const cliente = await clienteModel.findById(id);
+      const empresaId = req.user.role === 'admin' ? null : req.user.empresaId;
+      
+      const cliente = await clienteModel.findById(id, empresaId);
       
       if (!cliente) {
         return res.status(404).json({ erro: 'Cliente não encontrado' });
       }
-      
-      res.status(200).json(cliente);
+
+      res.json(cliente);
     } catch (error) {
-      console.error(`Erro ao buscar cliente com ID ${req.params.id}:`, error);
-      res.status(500).json({
-        erro: 'Erro interno do servidor ao buscar cliente',
-        mensagem: error.message
-      });
+      console.error('Erro ao buscar cliente:', error);
+      res.status(500).json({ erro: 'Erro interno do servidor' });
     }
   }
 
-  // Criar um novo cliente
   async criarCliente(req, res) {
     try {
-      const novoCliente = req.body;
-      
-      // Validações básicas
-      if (!novoCliente.nome || !novoCliente.email) {
-        return res.status(400).json({ erro: 'Nome e email são obrigatórios' });
-      }
-      
-      const clienteCriado = await clienteModel.create(novoCliente);
-      res.status(201).json(clienteCriado);
+      const dadosCliente = {
+        ...req.body,
+        empresa_id: req.user.role === 'admin' ? req.body.empresa_id : req.user.empresaId
+      };
+
+      const cliente = await clienteModel.create(dadosCliente);
+      res.status(201).json(cliente);
     } catch (error) {
       console.error('Erro ao criar cliente:', error);
-      res.status(500).json({
-        erro: 'Erro interno do servidor ao criar cliente',
-        mensagem: error.message
-      });
+      res.status(500).json({ erro: 'Erro interno do servidor' });
     }
   }
 
-  // Atualizar um cliente existente
   async atualizarCliente(req, res) {
     try {
       const { id } = req.params;
-      const dadosAtualizados = req.body;
+      const empresaId = req.user.role === 'admin' ? null : req.user.empresaId;
       
-      // Validações básicas
-      if (!dadosAtualizados.nome || !dadosAtualizados.email) {
-        return res.status(400).json({ erro: 'Nome e email são obrigatórios' });
-      }
-      
-      const clienteAtualizado = await clienteModel.update(id, dadosAtualizados);
-      res.status(200).json(clienteAtualizado);
+      const cliente = await clienteModel.update(id, req.body, empresaId);
+      res.json(cliente);
     } catch (error) {
+      console.error('Erro ao atualizar cliente:', error);
       if (error.message === 'Cliente não encontrado') {
         return res.status(404).json({ erro: error.message });
       }
-      
-      console.error(`Erro ao atualizar cliente com ID ${req.params.id}:`, error);
-      res.status(500).json({
-        erro: 'Erro interno do servidor ao atualizar cliente',
-        mensagem: error.message
-      });
+      res.status(500).json({ erro: 'Erro interno do servidor' });
     }
   }
 
-  // Excluir um cliente
   async excluirCliente(req, res) {
     try {
       const { id } = req.params;
-      await clienteModel.delete(id);
-      res.status(200).json({ mensagem: 'Cliente excluído com sucesso' });
+      const empresaId = req.user.role === 'admin' ? null : req.user.empresaId;
+      
+      await clienteModel.delete(id, empresaId);
+      res.json({ mensagem: 'Cliente excluído com sucesso' });
     } catch (error) {
+      console.error('Erro ao excluir cliente:', error);
       if (error.message === 'Cliente não encontrado') {
         return res.status(404).json({ erro: error.message });
       }
+      res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+  }
+
+  async notificarCliente(req, res) {
+    try {
+      const { id } = req.params;
       
-      console.error(`Erro ao excluir cliente com ID ${req.params.id}:`, error);
-      res.status(500).json({
-        erro: 'Erro interno do servidor ao excluir cliente',
-        mensagem: error.message
+      // Simulação de envio de notificação
+      res.json({
+        success: true,
+        message: 'Notificação enviada com sucesso',
+        linkPagamento: `https://pagamento.exemplo.com/cliente/${id}`
       });
+    } catch (error) {
+      console.error('Erro ao notificar cliente:', error);
+      res.status(500).json({ erro: 'Erro interno do servidor' });
     }
   }
 }

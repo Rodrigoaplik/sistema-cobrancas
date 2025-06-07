@@ -6,13 +6,33 @@ class CobrancaModel {
   // Buscar cobranças por empresa
   async findByEmpresa(empresaId) {
     try {
-      const [rows] = await pool.query(
-        'SELECT * FROM cobrancas WHERE empresa_id = ? ORDER BY data_vencimento DESC',
-        [empresaId]
-      );
+      const [rows] = await pool.query(`
+        SELECT c.*, cl.nome as cliente_nome 
+        FROM cobrancas c 
+        JOIN clientes cl ON c.cliente_id = cl.id 
+        WHERE c.empresa_id = ? 
+        ORDER BY c.data_vencimento DESC
+      `, [empresaId]);
       return rows;
     } catch (error) {
       console.error('Erro ao buscar cobranças da empresa:', error);
+      throw error;
+    }
+  }
+
+  // Buscar cobranças por cliente
+  async findByCliente(clienteId) {
+    try {
+      const [rows] = await pool.query(`
+        SELECT c.*, cl.nome as cliente_nome 
+        FROM cobrancas c 
+        JOIN clientes cl ON c.cliente_id = cl.id 
+        WHERE c.cliente_id = ? 
+        ORDER BY c.data_vencimento DESC
+      `, [clienteId]);
+      return rows;
+    } catch (error) {
+      console.error('Erro ao buscar cobranças do cliente:', error);
       throw error;
     }
   }
@@ -37,11 +57,16 @@ class CobrancaModel {
   // Buscar cobrança por ID
   async findById(id, empresaId = null) {
     try {
-      let query = 'SELECT * FROM cobrancas WHERE id = ?';
+      let query = `
+        SELECT c.*, cl.nome as cliente_nome 
+        FROM cobrancas c 
+        JOIN clientes cl ON c.cliente_id = cl.id 
+        WHERE c.id = ?
+      `;
       const params = [id];
       
       if (empresaId) {
-        query += ' AND empresa_id = ?';
+        query += ' AND c.empresa_id = ?';
         params.push(empresaId);
       }
       
@@ -142,7 +167,7 @@ class CobrancaModel {
   }
 
   // Verificar cobranças vencidas e atualizar status
-  async verificarCobranfasVencidas() {
+  async verificarCobrancasVencidas() {
     try {
       const hoje = new Date().toISOString().split('T')[0];
       console.log(`Verificando cobranças vencidas (antes de ${hoje})...`);

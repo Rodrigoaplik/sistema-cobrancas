@@ -1,69 +1,119 @@
-# Welcome to your Lovable project
 
-## Project info
+# Sistema de Cobranças
 
-**URL**: https://lovable.dev/projects/e3dcc126-08e9-4da3-97b9-c44120bf8613
+Sistema completo para gerenciamento de cobranças com frontend React e backend Node.js.
 
-## How can I edit this code?
+## 🚀 Instalação Rápida
 
-There are several ways of editing your application.
+### 1. Configure o MySQL
+- Certifique-se que o MySQL está rodando
+- Anote a senha do usuário `root`
 
-**Use Lovable**
+### 2. Configure o projeto
+```bash
+# Instalar dependências do backend
+node setup.js
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/e3dcc126-08e9-4da3-97b9-c44120bf8613) and start prompting.
+# Configurar banco de dados
+node install-db.js
+```
 
-Changes made via Lovable will be committed automatically to this repo.
+### 3. Configure o arquivo .env
+Edite o arquivo `.env` e defina sua senha do MySQL:
+```env
+DB_PASSWORD=sua_senha_mysql_real
+```
 
-**Use your preferred IDE**
+### 4. Inicie o sistema
+```bash
+# Terminal 1 - Backend
+cd src/server
+npm start
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Terminal 2 - Frontend
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🔐 Credenciais Padrão
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- **Admin**: admin@sistema.com / admin123
+- **Empresa**: usuario@empresaexemplo.com / empresa123
 
-**Use GitHub Codespaces**
+## 📋 URLs de Acesso
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:5000
+- **Teste API**: http://localhost:5000/api
 
-## What technologies are used for this project?
+## 🛠️ Estrutura do Projeto
 
-This project is built with .
+```
+├── src/
+│   ├── server/           # Backend Node.js
+│   │   ├── controllers/  # Controladores
+│   │   ├── models/       # Modelos de dados
+│   │   ├── routes/       # Rotas da API
+│   │   ├── services/     # Serviços
+│   │   ├── middleware/   # Middlewares
+│   │   ├── config/       # Configurações
+│   │   └── database/     # Scripts SQL
+│   ├── components/       # Componentes React
+│   ├── pages/           # Páginas
+│   ├── services/        # Serviços do frontend
+│   └── contexts/        # Contextos React
+├── .env                 # Variáveis de ambiente
+└── package.json         # Dependências do frontend
+```
 
-- Vite
+## 🔧 Comandos Úteis
+
+```bash
+# Reinstalar dependências do backend
+cd src/server && npm install
+
+# Recriar banco de dados
+node install-db.js
+
+# Verificar logs do backend
+cd src/server && npm start
+
+# Verificar cobranças vencidas
+cd src/server && node -e "require('./models/cobrancaModel').verificarCobrancasVencidas()"
+```
+
+## 📦 Tecnologias
+
+### Backend
+- Node.js + Express
+- MySQL
+- JWT para autenticação
+- bcryptjs para senhas
+- node-schedule para tarefas
+
+### Frontend
+- React + Vite
 - TypeScript
-- React
-- shadcn-ui
 - Tailwind CSS
+- Shadcn/ui
+- React Query
+- React Router
 
-## How can I deploy this project?
+## 🐛 Solução de Problemas
 
-Simply open [Lovable](https://lovable.dev/projects/e3dcc126-08e9-4da3-97b9-c44120bf8613) and click on Share -> Publish.
+### Erro de bcrypt
+Se encontrar erros com bcrypt, o projeto usa `bcryptjs` que não precisa compilação.
 
-## I want to use a custom domain - is that possible?
+### Erro de conexão MySQL
+1. Verifique se o MySQL está rodando
+2. Confirme credenciais no `.env`
+3. Teste conexão: `mysql -u root -p`
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+### Erro de permissões
+Execute os comandos como administrador no Windows.
+
+## 📞 Suporte
+
+Para problemas técnicos, verifique:
+1. Logs do backend (`npm start`)
+2. Console do navegador (F12)
+3. Arquivo `.env` configurado corretamente

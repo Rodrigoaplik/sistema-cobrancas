@@ -15,6 +15,7 @@ import RelatoriosPage from "./pages/RelatoriosPage";
 import LoginPage from "./pages/LoginPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
+import AdminEmpresaFormPage from "./pages/AdminEmpresaFormPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/login" element={<LoginPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/empresas/nova" element={<AdminEmpresaFormPage />} />
           
           {/* Rotas protegidas com layout */}
           <Route element={<Layout />}>

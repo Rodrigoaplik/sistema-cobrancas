@@ -1,13 +1,13 @@
 
 import { useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Building2, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { authService } from '@/services/authService';
 import { useToast } from '@/hooks/use-toast';
 
 const LoginPage = () => {
@@ -17,11 +17,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const location = useLocation();
-  const { login } = useAuth();
   const { toast } = useToast();
-
-  const from = location.state?.from?.pathname || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,14 +25,19 @@ const LoginPage = () => {
     setError('');
 
     try {
-      await login(email, senha);
+      const result = await authService.login(email, senha);
       
       toast({
         title: 'Login realizado com sucesso',
-        description: 'Bem-vindo ao sistema!',
+        description: `Bem-vindo, ${result.user.nome}!`,
       });
 
-      navigate(from, { replace: true });
+      // Redirecionar baseado no role do usuário
+      if (result.user.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err: any) {
       setError(err.message);
       toast({

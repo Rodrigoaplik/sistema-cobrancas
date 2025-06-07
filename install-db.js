@@ -11,16 +11,7 @@ async function installDatabase() {
     // 1. Verificar se o arquivo .env existe
     if (!fs.existsSync('.env')) {
       console.log('❌ Arquivo .env não encontrado!');
-      console.log('📝 Por favor, crie o arquivo .env com suas configurações:');
-      console.log(`
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=sua_senha_mysql
-DB_NAME=sistema_cobrancas
-PORT=5000
-JWT_SECRET=sua_chave_jwt_super_secreta_aqui_deve_ser_muito_longa_e_complexa
-VITE_API_URL=http://localhost:5000/api
-      `);
+      console.log('📝 Execute primeiro: node setup.js');
       process.exit(1);
     }
 
@@ -34,7 +25,13 @@ VITE_API_URL=http://localhost:5000/api
       process.exit(1);
     }
 
-    // 3. Testar conexão MySQL (sem especificar banco)
+    if (process.env.DB_PASSWORD === 'sua_senha_mysql_aqui') {
+      console.log('❌ Configure sua senha real do MySQL no arquivo .env!');
+      console.log('📝 Edite: DB_PASSWORD=sua_senha_real');
+      process.exit(1);
+    }
+
+    // 3. Testar conexão MySQL
     console.log('🔍 Testando conexão com MySQL...');
     try {
       const connection = await mysql.createConnection({
@@ -53,46 +50,27 @@ VITE_API_URL=http://localhost:5000/api
       process.exit(1);
     }
 
-    // 4. Criar banco de dados se não existir
-    console.log('📊 Criando/verificando banco de dados...');
-    try {
-      const connection = await mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD
-      });
-      
-      await connection.execute(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME}`);
-      console.log(`✅ Banco '${process.env.DB_NAME}' criado/verificado com sucesso!`);
-      await connection.end();
-    } catch (error) {
-      console.log('❌ Erro ao criar banco:', error.message);
-      process.exit(1);
-    }
-
-    // 5. Executar script SQL
-    console.log('📋 Executando estrutura do banco...');
-    const sqlFile = 'src/server/database/setup.sql';
+    // 4. Executar script SQL completo
+    console.log('📊 Criando banco de dados completo...');
+    const sqlFile = 'src/server/database/complete-database.sql';
     
     if (!fs.existsSync(sqlFile)) {
       console.log(`❌ Arquivo ${sqlFile} não encontrado!`);
+      console.log('📝 Execute primeiro: node setup.js');
       process.exit(1);
     }
 
     try {
-      const command = process.platform === 'win32' 
-        ? `mysql -h ${process.env.DB_HOST} -u ${process.env.DB_USER} -p${process.env.DB_PASSWORD} < ${sqlFile}`
-        : `mysql -h ${process.env.DB_HOST} -u ${process.env.DB_USER} -p${process.env.DB_PASSWORD} < ${sqlFile}`;
-      
+      const command = `mysql -h ${process.env.DB_HOST} -u ${process.env.DB_USER} -p${process.env.DB_PASSWORD} < ${sqlFile}`;
       execSync(command, { stdio: 'inherit' });
-      console.log('✅ Estrutura do banco criada com sucesso!');
+      console.log('✅ Banco de dados criado com sucesso!');
     } catch (error) {
       console.log('❌ Erro ao executar SQL:', error.message);
       process.exit(1);
     }
 
-    // 6. Verificar se as tabelas foram criadas
-    console.log('🔍 Verificando tabelas criadas...');
+    // 5. Verificar se foi criado corretamente
+    console.log('🔍 Verificando estrutura criada...');
     try {
       const connection = await mysql.createConnection({
         host: process.env.DB_HOST,
@@ -101,33 +79,45 @@ VITE_API_URL=http://localhost:5000/api
         database: process.env.DB_NAME
       });
       
+      // Verificar tabelas
       const [tables] = await connection.execute('SHOW TABLES');
-      console.log(`✅ ${tables.length} tabelas criadas com sucesso!`);
+      console.log(`✅ ${tables.length} tabelas criadas!`);
       
       // Verificar dados iniciais
-      const [users] = await connection.execute('SELECT COUNT(*) as count FROM usuarios');
       const [empresas] = await connection.execute('SELECT COUNT(*) as count FROM empresas');
+      const [usuarios] = await connection.execute('SELECT COUNT(*) as count FROM usuarios');
+      const [clientes] = await connection.execute('SELECT COUNT(*) as count FROM clientes');
+      const [cobrancas] = await connection.execute('SELECT COUNT(*) as count FROM cobrancas');
       
-      console.log(`📊 Dados iniciais: ${users[0].count} usuários, ${empresas[0].count} empresas`);
+      console.log('📊 Dados iniciais carregados:');
+      console.log(`   - ${empresas[0].count} empresas`);
+      console.log(`   - ${usuarios[0].count} usuários`);
+      console.log(`   - ${clientes[0].count} clientes`);
+      console.log(`   - ${cobrancas[0].count} cobranças`);
       
       await connection.end();
     } catch (error) {
-      console.log('❌ Erro ao verificar tabelas:', error.message);
+      console.log('❌ Erro ao verificar estrutura:', error.message);
       process.exit(1);
     }
 
     console.log('\n🎉 INSTALAÇÃO CONCLUÍDA COM SUCESSO!');
     console.log('\n🔐 Credenciais de acesso:');
     console.log('👤 Admin: admin@sistema.com / admin123');
-    console.log('🏢 Empresa: usuario@empresaexemplo.com / empresa123');
+    console.log('🏢 Empresa 1: usuario@empresaexemplo.com / empresa123');
+    console.log('🏢 Empresa 2: carlos@techsolutions.com / empresa123');
+    console.log('🏢 Empresa 3: ana@consultoriaxyz.com / empresa123');
+    
     console.log('\n🚀 Próximos passos:');
     console.log('1. cd src/server');
     console.log('2. npm install');
     console.log('3. npm start (para iniciar o backend)');
     console.log('4. Em outro terminal: npm run dev (para iniciar o frontend)');
+    
     console.log('\n🌐 URLs de acesso:');
     console.log('- Frontend: http://localhost:5173');
     console.log('- Backend API: http://localhost:5000');
+    console.log('- Teste API: http://localhost:5000/api');
 
   } catch (error) {
     console.error('❌ Erro durante a instalação:', error.message);

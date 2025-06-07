@@ -6,13 +6,7 @@ class UsuarioModel {
   // Buscar todos os usuários
   async findAll() {
     try {
-      const [rows] = await pool.query(`
-        SELECT u.id, u.nome, u.email, u.role, u.status, u.criado_em, u.atualizado_em,
-               e.nome as empresa_nome
-        FROM usuarios u 
-        LEFT JOIN empresas e ON u.empresa_id = e.id 
-        ORDER BY u.nome
-      `);
+      const [rows] = await pool.query('SELECT id, nome, email, role, criado_em, atualizado_em FROM usuarios ORDER BY nome');
       return rows;
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
@@ -23,12 +17,7 @@ class UsuarioModel {
   // Buscar usuário por ID
   async findById(id) {
     try {
-      const [rows] = await pool.query(`
-        SELECT u.*, e.nome as empresa_nome 
-        FROM usuarios u 
-        LEFT JOIN empresas e ON u.empresa_id = e.id 
-        WHERE u.id = ?
-      `, [id]);
+      const [rows] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [id]);
       return rows[0];
     } catch (error) {
       console.error(`Erro ao buscar usuário com ID ${id}:`, error);
@@ -36,15 +25,10 @@ class UsuarioModel {
     }
   }
 
-  // Buscar usuário por email (para login)
+  // Buscar usuário por email
   async findByEmail(email) {
     try {
-      const [rows] = await pool.query(`
-        SELECT u.*, e.nome as empresa_nome 
-        FROM usuarios u 
-        LEFT JOIN empresas e ON u.empresa_id = e.id 
-        WHERE u.email = ?
-      `, [email]);
+      const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
       return rows[0];
     } catch (error) {
       console.error(`Erro ao buscar usuário com email ${email}:`, error);
@@ -58,8 +42,8 @@ class UsuarioModel {
       const id = uuidv4();
       const query = `
         INSERT INTO usuarios 
-        (id, nome, email, senha_hash, role, empresa_id) 
-        VALUES (?, ?, ?, ?, ?, ?)
+        (id, nome, email, senha_hash, role) 
+        VALUES (?, ?, ?, ?, ?)
       `;
       
       const [result] = await pool.query(query, [
@@ -67,8 +51,7 @@ class UsuarioModel {
         usuario.nome,
         usuario.email,
         usuario.senha_hash,
-        usuario.role || 'usuario',
-        usuario.empresa_id || null
+        usuario.role || 'usuario'
       ]);
       
       return { id, ...usuario };
@@ -83,7 +66,7 @@ class UsuarioModel {
     try {
       const query = `
         UPDATE usuarios 
-        SET nome = ?, email = ?, role = ?, empresa_id = ?
+        SET nome = ?, email = ?, role = ?
         ${usuario.senha_hash ? ', senha_hash = ?' : ''}
         WHERE id = ?
       `;
@@ -91,8 +74,7 @@ class UsuarioModel {
       const params = [
         usuario.nome,
         usuario.email,
-        usuario.role,
-        usuario.empresa_id || null
+        usuario.role
       ];
       
       if (usuario.senha_hash) {

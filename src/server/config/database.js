@@ -1,6 +1,6 @@
 
 const mysql = require('mysql2/promise');
-require('dotenv').config({ path: '../../.env' });
+require('dotenv').config();
 
 // Configuração da conexão com o banco de dados
 const dbConfig = {
@@ -10,16 +10,8 @@ const dbConfig = {
   database: process.env.DB_NAME || 'sistema_cobrancas',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0,
-  timezone: 'Z'
+  queueLimit: 0
 };
-
-console.log('🔧 Configuração do banco:', {
-  host: dbConfig.host,
-  user: dbConfig.user,
-  database: dbConfig.database,
-  password: dbConfig.password ? '***' : 'não definida'
-});
 
 // Criação do pool de conexões
 const pool = mysql.createPool(dbConfig);
@@ -28,40 +20,15 @@ const pool = mysql.createPool(dbConfig);
 async function testConnection() {
   try {
     const connection = await pool.getConnection();
-    console.log('✅ Conexão com o banco de dados estabelecida com sucesso!');
-    console.log(`📋 Conectado ao banco: ${dbConfig.database}`);
+    console.log('Conexão com o banco de dados estabelecida com sucesso!');
     connection.release();
   } catch (error) {
-    console.error('❌ Erro ao conectar ao banco de dados:', error.message);
-    console.error('📝 Verifique se:');
-    console.error('   1. O MySQL está rodando');
-    console.error('   2. As credenciais no arquivo .env estão corretas');
-    console.error('   3. O banco de dados foi criado');
-    console.error('   4. A senha do usuário root está correta');
+    console.error('Erro ao conectar ao banco de dados:', error);
     process.exit(1);
-  }
-}
-
-// Função para criar o banco se não existir
-async function createDatabaseIfNotExists() {
-  try {
-    const connectionWithoutDB = await mysql.createConnection({
-      host: dbConfig.host,
-      user: dbConfig.user,
-      password: dbConfig.password
-    });
-    
-    await connectionWithoutDB.execute(`CREATE DATABASE IF NOT EXISTS ${dbConfig.database}`);
-    console.log(`✅ Banco '${dbConfig.database}' verificado/criado com sucesso!`);
-    await connectionWithoutDB.end();
-  } catch (error) {
-    console.error('❌ Erro ao criar/verificar banco:', error.message);
-    throw error;
   }
 }
 
 module.exports = {
   pool,
-  testConnection,
-  createDatabaseIfNotExists
+  testConnection
 };

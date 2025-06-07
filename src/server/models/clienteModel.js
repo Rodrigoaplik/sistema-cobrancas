@@ -3,29 +3,10 @@ const { pool } = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 
 class ClienteModel {
-  // Buscar clientes por empresa
-  async findByEmpresa(empresaId) {
-    try {
-      const [rows] = await pool.query(
-        'SELECT * FROM clientes WHERE empresa_id = ? ORDER BY nome',
-        [empresaId]
-      );
-      return rows;
-    } catch (error) {
-      console.error('Erro ao buscar clientes da empresa:', error);
-      throw error;
-    }
-  }
-
-  // Buscar todos os clientes (admin)
+  // Buscar todos os clientes
   async findAll() {
     try {
-      const [rows] = await pool.query(`
-        SELECT c.*, e.nome as empresa_nome 
-        FROM clientes c 
-        JOIN empresas e ON c.empresa_id = e.id 
-        ORDER BY c.nome
-      `);
+      const [rows] = await pool.query('SELECT * FROM clientes ORDER BY nome');
       return rows;
     } catch (error) {
       console.error('Erro ao buscar clientes:', error);
@@ -34,17 +15,9 @@ class ClienteModel {
   }
 
   // Buscar cliente por ID
-  async findById(id, empresaId = null) {
+  async findById(id) {
     try {
-      let query = 'SELECT * FROM clientes WHERE id = ?';
-      const params = [id];
-      
-      if (empresaId) {
-        query += ' AND empresa_id = ?';
-        params.push(empresaId);
-      }
-      
-      const [rows] = await pool.query(query, params);
+      const [rows] = await pool.query('SELECT * FROM clientes WHERE id = ?', [id]);
       return rows[0];
     } catch (error) {
       console.error(`Erro ao buscar cliente com ID ${id}:`, error);
@@ -58,13 +31,12 @@ class ClienteModel {
       const id = uuidv4();
       const query = `
         INSERT INTO clientes 
-        (id, empresa_id, nome, email, telefone, whatsapp, endereco, cidade, estado, cep) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, nome, email, telefone, whatsapp, endereco, cidade, estado, cep) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
       
       const [result] = await pool.query(query, [
         id,
-        cliente.empresa_id,
         cliente.nome,
         cliente.email,
         cliente.telefone,
@@ -83,15 +55,16 @@ class ClienteModel {
   }
 
   // Atualizar um cliente existente
-  async update(id, cliente, empresaId = null) {
+  async update(id, cliente) {
     try {
-      let query = `
+      const query = `
         UPDATE clientes 
         SET nome = ?, email = ?, telefone = ?, whatsapp = ?, 
             endereco = ?, cidade = ?, estado = ?, cep = ?
         WHERE id = ?
       `;
-      const params = [
+      
+      const [result] = await pool.query(query, [
         cliente.nome,
         cliente.email,
         cliente.telefone,
@@ -101,14 +74,7 @@ class ClienteModel {
         cliente.estado,
         cliente.cep,
         id
-      ];
-      
-      if (empresaId) {
-        query += ' AND empresa_id = ?';
-        params.push(empresaId);
-      }
-      
-      const [result] = await pool.query(query, params);
+      ]);
       
       if (result.affectedRows === 0) {
         throw new Error('Cliente não encontrado');
@@ -122,17 +88,9 @@ class ClienteModel {
   }
 
   // Excluir um cliente
-  async delete(id, empresaId = null) {
+  async delete(id) {
     try {
-      let query = 'DELETE FROM clientes WHERE id = ?';
-      const params = [id];
-      
-      if (empresaId) {
-        query += ' AND empresa_id = ?';
-        params.push(empresaId);
-      }
-      
-      const [result] = await pool.query(query, params);
+      const [result] = await pool.query('DELETE FROM clientes WHERE id = ?', [id]);
       
       if (result.affectedRows === 0) {
         throw new Error('Cliente não encontrado');

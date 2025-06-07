@@ -1,97 +1,62 @@
 
-class ComunicacaoService {
-  // Enviar notificação genérica
-  async enviarNotificacao({ cliente, cobranca, tipo, mensagem, assunto }) {
-    try {
-      console.log(`Enviando notificação para ${cliente.nome} (${cliente.email})`);
-      console.log(`Tipo: ${tipo}`);
-      console.log(`Assunto: ${assunto}`);
-      console.log(`Mensagem: ${mensagem}`);
-      
-      // Aqui seria a integração real com serviços de email/SMS/WhatsApp
-      // Por enquanto, simulamos o envio
-      
-      const resultado = {
-        success: true,
-        message: 'Notificação enviada com sucesso',
-        cliente: cliente.nome,
-        email: cliente.email,
-        tipo: tipo,
-        timestamp: new Date().toISOString()
-      };
-      
-      if (cobranca) {
-        resultado.cobranca = {
-          id: cobranca.id,
-          descricao: cobranca.descricao,
-          valor: cobranca.valor,
-          dataVencimento: cobranca.data_vencimento
-        };
-        
-        // Gerar link de pagamento simulado
-        resultado.linkPagamento = `https://pagamento-simulado.com/pix/${cobranca.id}`;
-      }
-      
-      return resultado;
-    } catch (error) {
-      console.error('Erro ao enviar notificação:', error);
-      throw error;
-    }
-  }
+// Serviço para comunicação via WhatsApp e Email
+// Em produção você usaria APIs como Twilio, WhatsApp Business API ou SendGrid
 
-  // Enviar lembrete de vencimento
-  async enviarLembreteVencimento(cliente, cobranca) {
-    const dataVencimento = new Date(cobranca.data_vencimento);
-    const hoje = new Date();
-    const diasParaVencimento = Math.ceil((dataVencimento - hoje) / (1000 * 60 * 60 * 24));
+// Função para enviar mensagem via WhatsApp
+async function sendWhatsApp(numeroDestino, mensagem) {
+  try {
+    console.log(`[SIMULAÇÃO] Enviando WhatsApp para ${numeroDestino}: ${mensagem}`);
     
-    let mensagem;
-    if (diasParaVencimento > 0) {
-      mensagem = `Olá ${cliente.nome}! Sua cobrança "${cobranca.descricao}" no valor de R$ ${cobranca.valor.toFixed(2)} vence em ${diasParaVencimento} dias (${dataVencimento.toLocaleDateString('pt-BR')}).`;
-    } else if (diasParaVencimento === 0) {
-      mensagem = `Olá ${cliente.nome}! Sua cobrança "${cobranca.descricao}" no valor de R$ ${cobranca.valor.toFixed(2)} vence HOJE!`;
-    } else {
-      mensagem = `Olá ${cliente.nome}! Sua cobrança "${cobranca.descricao}" no valor de R$ ${cobranca.valor.toFixed(2)} venceu há ${Math.abs(diasParaVencimento)} dias.`;
-    }
+    // Simular comunicação com WhatsApp API
+    // Em produção, aqui teria a integração real com a API do WhatsApp Business ou Twilio
+    // Exemplo: const response = await whatsappClient.messages.create({...});
     
-    return await this.enviarNotificacao({
-      cliente,
-      cobranca,
-      tipo: 'lembrete_vencimento',
-      mensagem,
-      assunto: 'Lembrete de Vencimento - Sistema de Cobranças'
-    });
-  }
-
-  // Enviar notificação de cobrança vencida
-  async enviarNotificacaoVencimento(cliente, cobranca) {
-    const dataVencimento = new Date(cobranca.data_vencimento);
-    const hoje = new Date();
-    const diasVencidos = Math.ceil((hoje - dataVencimento) / (1000 * 60 * 60 * 24));
+    // Simular um pequeno atraso na resposta da API
+    await new Promise(resolve => setTimeout(resolve, 300));
     
-    const mensagem = `Olá ${cliente.nome}! Sua cobrança "${cobranca.descricao}" no valor de R$ ${cobranca.valor.toFixed(2)} está vencida há ${diasVencidos} dias. Por favor, regularize sua situação o quanto antes.`;
-    
-    return await this.enviarNotificacao({
-      cliente,
-      cobranca,
-      tipo: 'cobranca_vencida',
-      mensagem,
-      assunto: 'Cobrança Vencida - Sistema de Cobranças'
-    });
-  }
-
-  // Enviar confirmação de pagamento
-  async enviarConfirmacaoPagamento(cliente, cobranca) {
-    const mensagem = `Olá ${cliente.nome}! Confirmamos o recebimento do pagamento da cobrança "${cobranca.descricao}" no valor de R$ ${cobranca.valor.toFixed(2)}. Obrigado!`;
-    
-    return await this.enviarNotificacao({
-      cliente,
-      cobranca,
-      tipo: 'confirmacao_pagamento',
-      mensagem,
-      assunto: 'Pagamento Confirmado - Sistema de Cobranças'
-    });
+    return {
+      success: true,
+      id: `whatsapp_${Date.now()}`,
+      numero: numeroDestino,
+      mensagem: mensagem.substring(0, 50) + '...' // Resumo da mensagem
+    };
+  } catch (error) {
+    console.error(`Erro ao enviar WhatsApp para ${numeroDestino}:`, error);
+    return {
+      success: false,
+      error: error.message
+    };
   }
 }
 
-module.exports = new ComunicacaoService();
+// Função para enviar email
+async function sendEmail(emailDestino, assunto, conteudoHTML) {
+  try {
+    console.log(`[SIMULAÇÃO] Enviando email para ${emailDestino} com assunto: ${assunto}`);
+    
+    // Simular comunicação com Email API
+    // Em produção, aqui teria a integração real com SendGrid, Mailgun, etc.
+    // Exemplo: const response = await mailClient.send({...});
+    
+    // Simular um pequeno atraso na resposta da API
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return {
+      success: true,
+      id: `email_${Date.now()}`,
+      email: emailDestino,
+      assunto: assunto
+    };
+  } catch (error) {
+    console.error(`Erro ao enviar email para ${emailDestino}:`, error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+module.exports = {
+  sendWhatsApp,
+  sendEmail
+};

@@ -4,13 +4,9 @@ const notificacaoController = require('../controllers/notificacaoController');
 
 const router = express.Router();
 
-// Rota para enviar notificações genéricas
-router.post('/enviar', notificacaoController.enviarNotificacao);
-
-// Rota para enviar lembrete de vencimento
-router.post('/lembrete/:clienteId/:cobrancaId', notificacaoController.enviarLembreteVencimento);
-
-// Rota para enviar notificação de vencimento
-router.post('/vencimento/:clienteId/:cobrancaId', notificacaoController.enviarNotificacaoVencimento);
+// Rotas para notificações
+router.post('/enviar', notificacaoController.enviarNotificacao.bind(notificacaoController));
+router.post('/verificar-vencimentos', notificacaoController.verificarVencimentos.bind(notificacaoController));
+router.post('/enviar-manual', notificacaoController.enviarNotificacaoManual.bind(notificacaoController));
 
 module.exports = router;

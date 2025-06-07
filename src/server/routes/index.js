@@ -3,7 +3,6 @@ const express = require('express');
 const clienteRoutes = require('./clienteRoutes');
 const cobrancaRoutes = require('./cobrancaRoutes');
 const notificacaoRoutes = require('./notificacaoRoutes');
-const empresaRoutes = require('./empresaRoutes');
 const authRoutes = require('./authRoutes');
 const { verificarToken } = require('../middleware/authMiddleware');
 
@@ -19,6 +18,5 @@ router.use(verificarToken);
 router.use('/clientes', clienteRoutes);
 router.use('/cobrancas', cobrancaRoutes);
 router.use('/notificacoes', notificacaoRoutes);
-router.use('/empresas', empresaRoutes);
 
 module.exports = router;
